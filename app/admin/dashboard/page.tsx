@@ -1,16 +1,16 @@
 // app/admin/dashboard/page.tsx
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getStatistik } from "@/lib/apps-script";
 import Link from "next/link";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-export default async function AdminDashboard() {
+// Komponen untuk menampilkan statistik
+async function StatistikCards() {
   const stat = await getStatistik();
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">Dashboard Admin</h1>
-
-      {/* Statistik Cards */}
+    <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
@@ -91,6 +91,24 @@ export default async function AdminDashboard() {
           </Card>
         </Link>
       </div>
+    </>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-8">Dashboard Admin</h1>
+
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-100">
+            <LoadingSpinner />
+          </div>
+        }
+      >
+        <StatistikCards />
+      </Suspense>
     </div>
   );
 }
