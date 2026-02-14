@@ -18,10 +18,7 @@ export function SearchInput({
   const [value, setValue] = useState("");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onSearch(value);
-    }, delay);
-
+    const timer = setTimeout(() => onSearch(value), delay);
     return () => clearTimeout(timer);
   }, [value, onSearch, delay]);
 
@@ -33,7 +30,7 @@ export function SearchInput({
         placeholder={placeholder}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="pl-10 w-75"
+        className="pl-10 w-[300px]"
       />
     </div>
   );

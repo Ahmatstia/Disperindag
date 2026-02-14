@@ -3,7 +3,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import LogoutButton from "@/components/auth/logout-button";
-import { PageTransition } from "@/components/ui/page-transition";
 
 export default async function AdminLayout({
   children,
@@ -69,10 +68,8 @@ export default async function AdminLayout({
         </div>
       </nav>
 
-      {/* Main Content dengan Page Transition */}
-      <main className="container mx-auto px-4 py-8">
-        <PageTransition>{children}</PageTransition>
-      </main>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">{children}</main>
 
       {/* Footer kecil untuk admin */}
       <footer className="bg-white border-t mt-8 py-4">

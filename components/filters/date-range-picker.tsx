@@ -13,26 +13,26 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 interface DateRangePickerProps {
-  onSelect: (range: { from: Date; to: Date }) => void;
+  onSelect: (range: { from: Date; to: Date } | null) => void;
 }
 
 export function DateRangePicker({ onSelect }: DateRangePickerProps) {
-  const [date, setDate] = useState<{
-    from: Date;
-    to: Date;
-  }>();
+  const [date, setDate] = useState<{ from: Date; to: Date }>();
+
+  const handleSelect = (range: any) => {
+    setDate(range);
+    if (range?.from && range?.to) onSelect(range);
+    else onSelect(null);
+  };
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-70 justify-start text-left">
+        <Button variant="outline" className="w-[280px] justify-start text-left">
           <CalendarIcon className="mr-2 h-4 w-4" />
           {date?.from ? (
             date.to ? (
-              <>
-                {format(date.from, "dd/MM/yyyy")} -{" "}
-                {format(date.to, "dd/MM/yyyy")}
-              </>
+              `${format(date.from, "dd/MM/yyyy")} - ${format(date.to, "dd/MM/yyyy")}`
             ) : (
               format(date.from, "dd/MM/yyyy")
             )
@@ -41,19 +41,13 @@ export function DateRangePicker({ onSelect }: DateRangePickerProps) {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="range"
           selected={date}
-          onSelect={(range?: { from?: Date; to?: Date }) => {
-            if (range?.from && range?.to) {
-              setDate({ from: range.from, to: range.to });
-              onSelect({ from: range.from, to: range.to });
-            } else {
-              setDate(undefined);
-            }
-          }}
+          onSelect={handleSelect}
           locale={id}
+          numberOfMonths={2}
         />
       </PopoverContent>
     </Popover>

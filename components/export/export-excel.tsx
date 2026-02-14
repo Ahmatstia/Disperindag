@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import * as XLSX from "xlsx";
 
 interface ExportExcelProps {
-  data: Record<string, unknown>[];
+  data: any[];
   filename: string;
   sheetName?: string;
 }
@@ -24,8 +24,7 @@ export function ExportExcel({
 
   return (
     <Button onClick={handleExport} variant="outline" className="gap-2">
-      <Download className="h-4 w-4" />
-      Export Excel
+      <Download className="h-4 w-4" /> Export Excel
     </Button>
   );
 }

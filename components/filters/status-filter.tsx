@@ -21,7 +21,7 @@ export function StatusFilter({
 }: StatusFilterProps) {
   return (
     <Select onValueChange={onFilter}>
-      <SelectTrigger className="w-45">
+      <SelectTrigger className="w-[180px]">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
