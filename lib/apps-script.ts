@@ -1,38 +1,13 @@
+// lib/apps-script.ts
 const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL!;
 
-// Tipe data untuk TypeScript
-type SurveyData = {
-  Timestamp?: string;
-  Nama?: string;
-  Pekerjaan?: string;
-  "Jenis Kelamin"?: string;
-  Kepuasan?: string;
-  [key: string]: any;
-};
-
-type AduanData = {
-  Timestamp?: string;
-  Nama?: string;
-  "No HP"?: string;
-  Kategori?: string;
-  "Isi Aduan"?: string;
-  Status?: string;
-  [key: string]: any;
-};
-
-type TamuData = {
-  Timestamp?: string;
-  Nama?: string;
-  Instansi?: string;
-  Keperluan?: string;
-  "Bertemu Dengan"?: string;
-  [key: string]: any;
-};
-
-// Ambil semua data dari Apps Script
+// Fungsi untuk fetch di server (tidak bisa JSONP, harus pakai proxy)
 export async function getAllData() {
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    console.log("📡 Fetching dari Apps Script via proxy...");
+
+    // Pakai proxy API internal
+    const response = await fetch("/api/proxy", {
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
@@ -44,9 +19,11 @@ export async function getAllData() {
     }
 
     const data = await response.json();
+    console.log("✅ Data berhasil diambil:", data);
+
     return data;
   } catch (error) {
-    console.error("Gagal ambil data:", error);
+    console.error("❌ Gagal ambil data:", error);
     return {
       survey: [],
       aduan: [],
@@ -61,33 +38,68 @@ export async function getAllData() {
   }
 }
 
-// Ambil data survey saja
-export async function getSurveyData(): Promise<SurveyData[]> {
+// Format data survey
+export async function getSurveyData() {
   const data = await getAllData();
-  return data.survey || [];
+
+  return (data.survey || []).map((item: any) => ({
+    Timestamp: item.Timestamp || "",
+    Nama: item.Nama || "",
+    Pekerjaan: item["Pekerjaan "]?.trim() || item.Pekerjaan || "",
+    "Jenis Kelamin": item["Jenis Kelamin"] || "",
+    Kepuasan: item["Tingkat Kepuasan "]?.toString() || item.Kepuasan || "0",
+  }));
 }
 
-// Ambil data aduan saja
-export async function getAduanData(): Promise<AduanData[]> {
+// Format data aduan
+export async function getAduanData() {
   const data = await getAllData();
-  return data.aduan || [];
+
+  return (data.aduan || []).map((item: any) => ({
+    Timestamp: item.Timestamp || "",
+    Nama: item["Nama Lengkap"] || "",
+    "No HP": item["Nomor HP"]?.toString() || "",
+    Kategori: item["Kategori Aduan"] || "",
+    "Isi Aduan": item["Isi Aduan"] || "",
+    Status: item.Status || "pending",
+  }));
 }
 
-// Ambil data tamu saja
-export async function getTamuData(): Promise<TamuData[]> {
+// Format data tamu
+export async function getTamuData() {
   const data = await getAllData();
-  return data.tamu || [];
+
+  return (data.tamu || []).map((item: any) => ({
+    Timestamp: item.Timestamp || "",
+    Nama: item.Nama || "",
+    Instansi: item["Instansi/perusahaan"] || "",
+    Keperluan: item.Keperluan || "",
+    "Bertemu Dengan": item["Bertemu dg"] || "",
+  }));
 }
 
-// Ambil statistik saja
+// Hitung statistik
 export async function getStatistik() {
   const data = await getAllData();
-  return (
-    data.statistik || {
-      totalSurvey: 0,
-      totalAduan: 0,
-      totalTamu: 0,
-      rataKepuasan: 0,
+
+  let totalKepuasan = 0;
+  let jumlahData = 0;
+
+  data.survey?.forEach((item: any) => {
+    const nilai = parseInt(item["Tingkat Kepuasan "] || item.Kepuasan || "0");
+    if (!isNaN(nilai) && nilai > 0) {
+      totalKepuasan += nilai;
+      jumlahData++;
     }
-  );
+  });
+
+  const rataKepuasan =
+    jumlahData > 0 ? (totalKepuasan / jumlahData).toFixed(1) : 0;
+
+  return {
+    totalSurvey: data.survey?.length || 0,
+    totalAduan: data.aduan?.length || 0,
+    totalTamu: data.tamu?.length || 0,
+    rataKepuasan: rataKepuasan,
+  };
 }
