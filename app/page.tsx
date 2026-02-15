@@ -21,11 +21,9 @@ import {
   Clock,
   Users,
   CheckCircle,
-  Award,
   TrendingUp,
   Calendar,
   ChevronRight,
-  Star,
   Building2,
   Target,
   Facebook,
@@ -83,7 +81,7 @@ const news = [
     title: "Bimtek Peningkatan Kapasitas UMKM",
     date: "15 Februari 2026",
     category: "Kegiatan",
-    image: "/news1.jpg",
+    image: "/kota.png",
     excerpt:
       "Dinas Perindustrian dan Perdagangan mengadakan bimbingan teknis bagi pelaku UMKM di Sumatera Barat.",
   },
@@ -91,7 +89,7 @@ const news = [
     title: "Pengumuman Libur Pelayanan",
     date: "10 Februari 2026",
     category: "Pengumuman",
-    image: "/news2.jpg",
+    image: "/kota.png",
     excerpt:
       "Sehubungan dengan hari libur nasional, pelayanan akan ditutup sementara pada tanggal 17 Februari 2026.",
   },
@@ -99,7 +97,7 @@ const news = [
     title: "Pameran Produk Unggulan Daerah",
     date: "5 Februari 2026",
     category: "Event",
-    image: "/news3.jpg",
+    image: "/kota.png",
     excerpt:
       "DISPERINDAG akan mengadakan pameran produk unggulan daerah di Padang. Ajak keluarga dan teman Anda!",
   },
@@ -107,7 +105,7 @@ const news = [
     title: "Sosialisasi Izin Usaha Industri",
     date: "1 Februari 2026",
     category: "Sosialisasi",
-    image: "/news4.jpg",
+    image: "/kota.png",
     excerpt:
       "Sosialisasi perizinan usaha industri melalui OSS akan dilaksanakan secara daring dan luring.",
   },
@@ -115,12 +113,12 @@ const news = [
 
 // Data Galeri
 const gallery = [
-  { src: "/gallery1.jpg", title: "Pelayanan Publik", category: "Kegiatan" },
-  { src: "/gallery2.jpg", title: "Kunjungan Lapangan", category: "Kegiatan" },
-  { src: "/gallery3.jpg", title: "Sosialisasi", category: "Event" },
-  { src: "/gallery4.jpg", title: "Rapat Koordinasi", category: "Rapat" },
-  { src: "/gallery5.jpg", title: "Pameran Produk", category: "Event" },
-  { src: "/gallery6.jpg", title: "Tim DISPERINDAG", category: "Profil" },
+  { src: "/kota.png", title: "Pelayanan Publik", category: "Kegiatan" },
+  { src: "/kota.png", title: "Kunjungan Lapangan", category: "Kegiatan" },
+  { src: "/kota.png", title: "Sosialisasi", category: "Event" },
+  { src: "/kota.png", title: "Rapat Koordinasi", category: "Rapat" },
+  { src: "/kota.png", title: "Pameran Produk", category: "Event" },
+  { src: "/kota.png", title: "Tim DISPERINDAG", category: "Profil" },
 ];
 
 // Data FAQ
@@ -176,18 +174,18 @@ const leadership = [
   {
     name: "Dr. Hendra Saputra, M.Si",
     position: "Kepala Dinas",
-    image: "/leader1.jpg",
+    image: "/logo.png",
   },
-  { name: "Ir. Maya Sari, MT", position: "Sekretaris", image: "/leader2.jpg" },
+  { name: "Ir. Maya Sari, MT", position: "Sekretaris", image: "/logo.png" },
   {
     name: "Doni Permana, SE",
     position: "Kabid Perindustrian",
-    image: "/leader3.jpg",
+    image: "/logo.png",
   },
   {
     name: "Rina Wulandari, SH",
     position: "Kabid Perdagangan",
-    image: "/leader4.jpg",
+    image: "/logo.png",
   },
 ];
 
@@ -205,7 +203,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.6, -0.05, 0.01, 0.99] },
+    transition: { duration: 0.6 },
   },
 };
 
@@ -303,7 +301,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
       {/* Floating Navbar */}
       <motion.header
         initial={{ y: -100 }}
@@ -408,7 +406,7 @@ export default function Home() {
             priority
             className="object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0f1d3a]/95 via-[#0f1d3a]/85 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#0f1d3a]/95 via-[#0f1d3a]/85 to-transparent" />
         </motion.div>
 
         {/* Static decorative elements - ganti partikel animasi */}
@@ -422,8 +420,8 @@ export default function Home() {
           <div className="absolute top-4/5 left-1/5 w-1 h-1 bg-white/10 rounded-full" />
 
           {/* Garis-garis dekoratif */}
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
         </div>
 
         {/* Content */}
@@ -436,7 +434,7 @@ export default function Home() {
               className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight"
             >
               Selamat Datang di
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
+              <span className="block text-transparent bg-clip-text bg-linear-to-r from-amber-400 to-amber-200">
                 Portal Layanan
               </span>
             </motion.h2>
@@ -496,7 +494,7 @@ export default function Home() {
       {/* Profil Singkat */}
       <section
         id="profil"
-        className="py-20 bg-gradient-to-b from-white to-slate-50"
+        className="py-20 bg-linear-to-b from-white to-slate-50"
       >
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -532,7 +530,7 @@ export default function Home() {
                     transition={{ delay: index * 0.1 }}
                     className="flex items-start gap-3"
                   >
-                    <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-6 h-6 text-green-500 shrink-0 mt-0.5" />
                     <span className="text-gray-700">{item}</span>
                   </motion.div>
                 ))}
@@ -549,7 +547,7 @@ export default function Home() {
               <div className="absolute -top-6 -left-6 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl" />
               <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
               <Image
-                src="/building.png"
+                src="/kota.png"
                 alt="Gedung DISPERINDAG"
                 width={600}
                 height={400}
@@ -618,7 +616,7 @@ export default function Home() {
                 <motion.div key={index} variants={itemVariants}>
                   <Card className="group h-full flex flex-col overflow-hidden hover:shadow-2xl transition-all duration-500">
                     <div
-                      className={`h-2 w-full bg-gradient-to-r from-${service.color}-500 to-${service.color}-400`}
+                      className={`h-2 w-full bg-linear-to-r from-${service.color}-500 to-${service.color}-400`}
                     />
                     <CardHeader>
                       <motion.div
@@ -860,7 +858,7 @@ export default function Home() {
                   fill
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                   <p className="font-semibold">{item.title}</p>
                   <p className="text-sm text-white/70">{item.category}</p>
@@ -955,7 +953,7 @@ export default function Home() {
 
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                     <MapPin className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
@@ -967,7 +965,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                     <Phone className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
@@ -979,7 +977,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                     <Mail className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
@@ -991,7 +989,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                     <Clock className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
@@ -1036,7 +1034,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="rounded-2xl overflow-hidden shadow-xl h-[400px]"
+              className="rounded-2xl overflow-hidden shadow-xl h-screen max-h-96"
             >
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2793680888847!2d100.354123!3d-0.955789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwNTcnMjAuOCJTIDEwMMKwMjEnMTQuOSJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
@@ -1190,7 +1188,7 @@ export default function Home() {
             onClick={scrollToTop}
             className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700 transition-colors"
           >
-            <ArrowRight className="w-5 h-5 rotate-[-90deg]" />
+            <ArrowRight className="w-5 h-5 -rotate-90" />
           </motion.button>
         )}
       </AnimatePresence>

@@ -200,7 +200,7 @@ export default function AduanPage() {
         title: "Berhasil",
         description: `Data berhasil diexport (${filteredData.length} baris)`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Gagal",
         description: "Gagal mengexport data",
@@ -224,14 +224,14 @@ export default function AduanPage() {
       key: "no",
       header: "No",
       width: 60,
-      render: (_: any, index: number) => index + 1,
+      render: (_: AduanItem, index: number) => index + 1,
     },
     {
       key: "timestamp",
       header: "Tanggal",
       width: 100,
       sortable: true,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3 text-gray-400" />
           <span className="text-sm">
@@ -245,9 +245,9 @@ export default function AduanPage() {
       header: "Nama",
       width: 150,
       sortable: true,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 bg-red-100 flex-shrink-0">
+          <Avatar className="w-8 h-8 bg-red-100 shrink-0">
             <AvatarFallback className="text-red-600 font-semibold">
               {getInitials(item.Nama)}
             </AvatarFallback>
@@ -261,20 +261,20 @@ export default function AduanPage() {
       header: "Pekerjaan",
       width: 120,
       sortable: true,
-      render: (item: any) => item.Pekerjaan || "-",
+      render: (item: AduanItem) => item.Pekerjaan || "-",
     },
     {
       key: "instansi",
       header: "Instansi",
       width: 150,
       sortable: true,
-      render: (item: any) => item.Instansi || "-",
+      render: (item: AduanItem) => item.Instansi || "-",
     },
     {
       key: "jk",
       header: "JK",
       width: 50,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <Badge
           variant="outline"
           className={
@@ -291,13 +291,13 @@ export default function AduanPage() {
       key: "usia",
       header: "Usia",
       width: 80,
-      render: (item: any) => item["Rentang Usia"] || "-",
+      render: (item: AduanItem) => item["Rentang Usia"] || "-",
     },
     {
       key: "peristiwa",
       header: "Peristiwa",
       width: 200,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <div className="truncate" title={item["Hal Peristiwa"]}>
           {item["Hal Peristiwa"]?.substring(0, 30)}...
         </div>
@@ -307,9 +307,9 @@ export default function AduanPage() {
       key: "lokasi",
       header: "Lokasi",
       width: 120,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
-          <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
           <span className="text-sm truncate">
             {item["Lokasi Peristiwa"] || "-"}
           </span>
@@ -320,9 +320,9 @@ export default function AduanPage() {
       key: "tglKejadian",
       header: "Tgl Kejadian",
       width: 100,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          <Clock className="w-3 h-3 text-gray-400 shrink-0" />
           <span className="text-sm">{item["Tanggal Kejadian"] || "-"}</span>
         </div>
       ),
@@ -331,7 +331,7 @@ export default function AduanPage() {
       key: "detail",
       header: "Detail",
       width: 60,
-      render: (item: any) => (
+      render: (item: AduanItem) => (
         <Dialog
           open={dialogOpen && selectedAduan === item}
           onOpenChange={(open) => {
@@ -457,7 +457,7 @@ export default function AduanPage() {
       key: "aksi",
       header: "Aksi",
       width: 60,
-      render: (item: any, index: number) => (
+      render: (item: AduanItem, index: number) => (
         <Button
           variant="ghost"
           size="sm"
@@ -482,7 +482,7 @@ export default function AduanPage() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-800 p-6 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-red-600 to-red-800 p-6 text-white shadow-xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
 
@@ -517,7 +517,7 @@ export default function AduanPage() {
 
       {/* Statistik */}
       <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-white">
+        <Card className="border-0 shadow-lg bg-linear-to-br from-red-50 to-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -543,10 +543,10 @@ export default function AduanPage() {
               <div className="flex flex-wrap gap-4">
                 <Input
                   placeholder="Cari nama/instansi/aduan..."
-                  className="w-[300px]"
+                  className="w-75"
                   onChange={(e) => debouncedSearch(e.target.value)}
                 />
-                <DatePicker date={selectedDate} setDate={setSelectedDate} />
+                <DatePicker value={selectedDate} onChange={setSelectedDate} />
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={exportToExcel}>
@@ -561,9 +561,9 @@ export default function AduanPage() {
 
       {/* Virtual Table */}
       <VirtualTable
-        data={filteredData}
-        columns={columns}
-        onRowClick={(item) => setSelectedAduan(item)}
+        data={filteredData as Record<string, unknown>[]}
+        columns={columns as any}
+        onRowClick={(item) => setSelectedAduan(item as AduanItem)}
         initialLoading={initialLoading}
         loading={loading}
         hasMore={hasMore}
