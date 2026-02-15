@@ -1,28 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSurveyDataPaginated } from "@/lib/apps-script";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SearchInput } from "@/components/filters/search-input";
-import { DateRangePicker } from "@/components/filters/date-range-picker";
-import { ExportExcel } from "@/components/export/export-excel";
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Trash2,
+  Filter,
+  Calendar,
+  Users,
+  Star,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  BarChart3,
+  Download,
 } from "lucide-react";
-import { LoadingTable } from "@/components/ui/loading-spinner";
 import {
   Dialog,
   DialogContent,
@@ -44,6 +38,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/filters/date-picker";
+import { VirtualTable } from "@/components/tables/virtual-table";
+import { useInfiniteData } from "@/hooks/use-infinite-data";
+import { getSurveyDataOptimized, deleteData } from "@/lib/apps-script";
+import * as XLSX from "xlsx";
+import { format } from "date-fns";
+import debounce from "lodash/debounce";
 
 interface SurveyItem {
   Timestamp: string;
@@ -80,15 +83,8 @@ interface SurveyItem {
 }
 
 export default function SurveyPage() {
-  const [data, setData] = useState<SurveyItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalData, setTotalData] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(
-    null,
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filteredData, setFilteredData] = useState<SurveyItem[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -98,36 +94,29 @@ export default function SurveyPage() {
     nama: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("Timestamp");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const { toast } = useToast();
-  const limit = 50;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const result = await getSurveyDataPaginated(page, limit);
-      setData(result.data);
-      setFilteredData(result.data);
-      setTotalPages(result.totalPages);
-      setTotalData(result.total);
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Gagal mengambil data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: surveyData,
+    initialLoading,
+    loading,
+    hasMore,
+    total,
+    loadMore,
+    refresh,
+    removeItem: removeLocalItem,
+  } = useInfiniteData({
+    fetchFn: (page, limit) => getSurveyDataOptimized(page, limit),
+    initialLimit: 50,
+    enabled: true,
+  });
 
   useEffect(() => {
-    fetchData();
-  }, [page]);
-
-  useEffect(() => {
-    let filtered = [...data];
+    let filtered = [...surveyData];
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -138,81 +127,68 @@ export default function SurveyPage() {
       );
     }
 
-    if (dateRange?.from && dateRange?.to) {
+    if (selectedDate) {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.Timestamp || "");
-        return itemDate >= dateRange.from && itemDate <= dateRange.to;
+        return itemDate.toDateString() === selectedDate.toDateString();
+      });
+    }
+
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        let valA = a[sortBy as keyof SurveyItem] || "";
+        let valB = b[sortBy as keyof SurveyItem] || "";
+
+        if (sortBy === "Timestamp") {
+          valA = new Date(valA).getTime();
+          valB = new Date(valB).getTime();
+        }
+
+        if (sortOrder === "asc") {
+          return valA > valB ? 1 : -1;
+        } else {
+          return valA < valB ? 1 : -1;
+        }
       });
     }
 
     setFilteredData(filtered);
-  }, [searchTerm, dateRange, data]);
+  }, [searchTerm, selectedDate, surveyData, sortBy, sortOrder]);
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchTerm(value);
+      }, 500),
+    [],
+  );
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
     setDeleting(true);
     try {
-      console.log("🗑️ Menghapus data:", {
-        sheetName: "survey", // GANTI SESUAI HALAMAN
-        rowIndex: (page - 1) * limit + itemToDelete.index,
-      });
+      const result = await deleteData("survey", itemToDelete.index);
 
-      const response = await fetch("/api/proxy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          sheetName: "survey", // GANTI SESUAI HALAMAN
-          rowIndex: (page - 1) * limit + itemToDelete.index,
-        }),
-      });
+      if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: `Data ${itemToDelete.nama} berhasil dihapus`,
+        });
 
-      const text = await response.text();
-      console.log("📥 Response text:", text);
-
-      if (!text || text.trim() === "") {
-        throw new Error("Response kosong dari server");
-      }
-
-      // Parse JSON
-      try {
-        const result = JSON.parse(text);
-        console.log("✅ Result (JSON):", result);
-
-        if (result.success) {
-          toast({
-            title: "Berhasil",
-            description: `Data ${itemToDelete.nama} berhasil dihapus`,
-          });
-          await fetchData();
-        } else {
-          throw new Error(result.error || "Gagal menghapus");
-        }
-      } catch (jsonError) {
-        // Fallback ke JSONP
-        const jsonMatch = text.match(/^([a-zA-Z0-9_]+)\((.*)\)$/);
-        if (jsonMatch && jsonMatch.length >= 3) {
-          const result = JSON.parse(jsonMatch[2]);
-          if (result.success) {
-            toast({
-              title: "Berhasil",
-              description: `Data ${itemToDelete.nama} berhasil dihapus`,
-            });
-            await fetchData();
-          } else {
-            throw new Error(result.error || "Gagal menghapus");
-          }
-        } else {
-          throw new Error("Format response tidak dikenal");
-        }
+        refresh();
+        removeLocalItem(itemToDelete.index);
+      } else {
+        throw new Error(result.error || "Gagal menghapus");
       }
     } catch (error) {
       console.error("❌ Delete error:", error);
       toast({
         title: "Gagal",
         description:
-          error instanceof Error ? error.message : "Terjadi kesalahan",
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat menghapus data",
         variant: "destructive",
       });
     } finally {
@@ -222,650 +198,601 @@ export default function SurveyPage() {
     }
   };
 
-  const getBadgeColor = (nilai: string) => {
-    if (nilai.includes("Sangat")) return "bg-green-100 text-green-800";
-    if (nilai.includes("Puas") || nilai.includes("Baik"))
-      return "bg-blue-100 text-blue-800";
-    if (nilai.includes("Cukup")) return "bg-yellow-100 text-yellow-800";
-    if (nilai.includes("Kurang")) return "bg-orange-100 text-orange-800";
-    if (nilai.includes("Tidak")) return "bg-red-100 text-red-800";
-    return "bg-gray-100 text-gray-800";
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
   };
 
-  if (loading) return <LoadingTable />;
+  const exportToExcel = async () => {
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Survey");
+      XLSX.writeFile(
+        workbook,
+        `survey_${format(new Date(), "yyyyMMdd_HHmm")}.xlsx`,
+      );
+
+      toast({
+        title: "Berhasil",
+        description: `Data berhasil diexport (${filteredData.length} baris)`,
+      });
+    } catch (error) {
+      toast({
+        title: "Gagal",
+        description: "Gagal mengexport data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getBadgeColor = (nilai: string) => {
+    if (nilai.includes("Sangat"))
+      return "bg-green-100 text-green-800 border-green-200";
+    if (nilai.includes("Puas") || nilai.includes("Baik"))
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    if (nilai.includes("Cukup"))
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    if (nilai.includes("Kurang"))
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    if (nilai.includes("Tidak"))
+      return "bg-red-100 text-red-800 border-red-200";
+    return "bg-gray-100 text-gray-800 border-gray-200";
+  };
+
+  const getInitials = (name: string) => {
+    return name?.charAt(0).toUpperCase() || "?";
+  };
+
+  const getStatistik = () => {
+    const total = filteredData.length;
+    const sangatPuas = filteredData.filter((item) =>
+      item.Kepuasan?.includes("Sangat"),
+    ).length;
+    const puas = filteredData.filter((item) =>
+      item.Kepuasan?.includes("Puas"),
+    ).length;
+    const cukup = filteredData.filter((item) =>
+      item.Kepuasan?.includes("Cukup"),
+    ).length;
+    const kurang = filteredData.filter((item) =>
+      item.Kepuasan?.includes("Kurang"),
+    ).length;
+
+    return { total, sangatPuas, puas, cukup, kurang };
+  };
+
+  const stat = getStatistik();
+  const totalKepuasan = stat.total || 1;
+
+  const columns = [
+    {
+      key: "no",
+      header: "No",
+      width: 60,
+      render: (_: any, index: number) => index + 1,
+    },
+    {
+      key: "timestamp",
+      header: "Tanggal",
+      width: 100,
+      sortable: true,
+      render: (item: any) => (
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3 h-3 text-gray-400" />
+          <span className="text-sm">
+            {new Date(item.Timestamp).toLocaleDateString("id-ID")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "nama",
+      header: "Nama",
+      width: 150,
+      sortable: true,
+      render: (item: any) => (
+        <div className="flex items-center gap-2">
+          <Avatar className="w-8 h-8 bg-blue-100 flex-shrink-0">
+            <AvatarFallback className="text-blue-600 font-semibold">
+              {getInitials(item.Nama)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium truncate">{item.Nama || "-"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "pekerjaan",
+      header: "Pekerjaan",
+      width: 120,
+      sortable: true,
+      render: (item: any) => item.Pekerjaan || "-",
+    },
+    {
+      key: "jk",
+      header: "JK",
+      width: 50,
+      render: (item: any) => (
+        <Badge
+          variant="outline"
+          className={
+            item["Jenis Kelamin"] === "Laki-laki"
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : "bg-pink-50 text-pink-700 border-pink-200"
+          }
+        >
+          {item["Jenis Kelamin"] === "Laki-laki" ? "L" : "P"}
+        </Badge>
+      ),
+    },
+    {
+      key: "usia",
+      header: "Usia",
+      width: 80,
+      render: (item: any) => item["Rentang Usia"] || "-",
+    },
+    {
+      key: "layanan",
+      header: "Layanan",
+      width: 120,
+      render: (item: any) => (
+        <Badge
+          variant="outline"
+          className="bg-purple-50 text-purple-700 border-purple-200"
+        >
+          {item.Layanan?.substring(0, 15) || "-"}
+        </Badge>
+      ),
+    },
+    {
+      key: "kepuasan",
+      header: "Kepuasan",
+      width: 100,
+      render: (item: any) => (
+        <Badge className={getBadgeColor(item.Kepuasan)}>
+          {item.Kepuasan || "-"}
+        </Badge>
+      ),
+    },
+    {
+      key: "detail",
+      header: "Detail",
+      width: 60,
+      render: (item: any) => (
+        <Dialog
+          open={dialogOpen && selectedSurvey === item}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setSelectedSurvey(null);
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedSurvey(item);
+              }}
+              className="hover:bg-blue-100"
+            >
+              <Eye className="h-4 w-4 text-blue-600" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <Avatar className="w-10 h-10 bg-blue-100">
+                  <AvatarFallback className="text-blue-600">
+                    {getInitials(item.Nama)}
+                  </AvatarFallback>
+                </Avatar>
+                Detail Survey - {item.Nama}
+              </DialogTitle>
+              <DialogDescription>
+                Informasi lengkap survey kepuasan
+              </DialogDescription>
+            </DialogHeader>
+            {selectedSurvey && (
+              <Tabs defaultValue="identitas" className="w-full">
+                <TabsList className="grid grid-cols-5 mb-4">
+                  <TabsTrigger value="identitas">Identitas</TabsTrigger>
+                  <TabsTrigger value="layanan">Layanan</TabsTrigger>
+                  <TabsTrigger value="petugas">Petugas</TabsTrigger>
+                  <TabsTrigger value="pengaduan">Pengaduan</TabsTrigger>
+                  <TabsTrigger value="sarana">Sarana</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="identitas" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Timestamp</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey.Timestamp}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Nama</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey.Nama}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Pekerjaan</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey.Pekerjaan}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Jenis Kelamin</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey["Jenis Kelamin"]}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Rentang Usia</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey["Rentang Usia"]}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-500">Layanan</p>
+                      <p className="font-medium bg-gray-50 p-2 rounded">
+                        {selectedSurvey.Layanan}
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="layanan" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        label: "Persyaratan",
+                        value: selectedSurvey.Persyaratan,
+                      },
+                      { label: "Prosedur", value: selectedSurvey.Prosedur },
+                      {
+                        label: "Waktu Proses Berkas",
+                        value: selectedSurvey["Waktu Proses Berkas"],
+                      },
+                      {
+                        label: "Waktu Selesai Aduan",
+                        value: selectedSurvey["Waktu Selesai Aduan"],
+                      },
+                      {
+                        label: "Waktu Aduan Online",
+                        value: selectedSurvey["Waktu Aduan Online"],
+                      },
+                      {
+                        label: "Waktu Respon Online",
+                        value: selectedSurvey["Waktu Respon Online"],
+                      },
+                      { label: "Biaya", value: selectedSurvey.Biaya },
+                      {
+                        label: "Kesesuaian Hasil",
+                        value: selectedSurvey.Kesesuaian,
+                      },
+                    ].map((field, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <p className="text-sm text-gray-500">{field.label}</p>
+                        <Badge className={getBadgeColor(field.value)}>
+                          {field.value || "-"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="petugas" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: "Penguasaan", value: selectedSurvey.Penguasaan },
+                      { label: "Komunikasi", value: selectedSurvey.Komunikasi },
+                      {
+                        label: "Komunikasi Online",
+                        value: selectedSurvey["Komunikasi Online"],
+                      },
+                      { label: "Sikap", value: selectedSurvey.Sikap },
+                      { label: "Kerapian", value: selectedSurvey.Kerapian },
+                    ].map((field, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <p className="text-sm text-gray-500">{field.label}</p>
+                        <Badge className={getBadgeColor(field.value)}>
+                          {field.value || "-"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pengaduan" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        label: "Keberadaan Pengaduan",
+                        value: selectedSurvey["Keberadaan Pengaduan"],
+                      },
+                      {
+                        label: "Tata Cara",
+                        value: selectedSurvey["Tata Cara Pengaduan"],
+                      },
+                      {
+                        label: "Pengaduan Online",
+                        value: selectedSurvey["Pengaduan Online"],
+                      },
+                      {
+                        label: "Keberlanjutan",
+                        value: selectedSurvey.Keberlanjutan,
+                      },
+                    ].map((field, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <p className="text-sm text-gray-500">{field.label}</p>
+                        <Badge className={getBadgeColor(field.value)}>
+                          {field.value || "-"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="sarana" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        label: "Kelengkapan Sarana",
+                        value: selectedSurvey["Sarana Kelengkapan"],
+                      },
+                      {
+                        label: "Kelayakan Sarana",
+                        value: selectedSurvey["Sarana Kelayakan"],
+                      },
+                      {
+                        label: "Sarana Toilet",
+                        value: selectedSurvey["Sarana Toilet"],
+                      },
+                      { label: "Kebersihan", value: selectedSurvey.Kebersihan },
+                      {
+                        label: "Front Officer",
+                        value: selectedSurvey["Front Officer"],
+                      },
+                      {
+                        label: "Ketersediaan Info",
+                        value: selectedSurvey["Ketersediaan Informasi"],
+                      },
+                      {
+                        label: "Kemanfaatan Online",
+                        value: selectedSurvey["Kemanfaatan Online"],
+                      },
+                      { label: "Kepuasan", value: selectedSurvey.Kepuasan },
+                    ].map((field, idx) => (
+                      <div key={idx} className="space-y-1">
+                        <p className="text-sm text-gray-500">{field.label}</p>
+                        <Badge className={getBadgeColor(field.value)}>
+                          {field.value || "-"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
+          </DialogContent>
+        </Dialog>
+      ),
+    },
+    {
+      key: "aksi",
+      header: "Aksi",
+      width: 60,
+      render: (item: any, index: number) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setItemToDelete({
+              index,
+              nama: item.Nama || "Unnamed",
+            });
+            setDeleteDialogOpen(true);
+          }}
+          className="hover:bg-red-100"
+        >
+          <Trash2 className="h-4 w-4 text-red-600" />
+        </Button>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Data Survey Kepuasan</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Total {totalData} responden
-          </p>
-        </div>
-        <Button onClick={fetchData} variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </Button>
-      </div>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Total Data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">
-              {filteredData.length}
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              Data Survey Kepuasan
+            </h1>
+            <p className="text-blue-100 flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Total {total} responden telah mengisi survey
             </p>
-            <p className="text-xs text-gray-500">Dari {totalData} total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">
-              Rata-rata Kepuasan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-600">
-              {(
-                filteredData.reduce((acc, item) => {
-                  const nilai = item.Kepuasan?.includes("Sangat")
-                    ? 5
-                    : item.Kepuasan?.includes("Puas")
-                      ? 4
-                      : item.Kepuasan?.includes("Cukup")
-                        ? 3
-                        : item.Kepuasan?.includes("Kurang")
-                          ? 2
-                          : 1;
-                  return acc + (item.Kepuasan ? nilai : 0);
-                }, 0) / (filteredData.filter((i) => i.Kepuasan).length || 1)
-              ).toFixed(1)}
-            </p>
-            <p className="text-xs text-gray-500">Skala 1-5</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-4">
-          <SearchInput
-            onSearch={setSearchTerm}
-            placeholder="Cari nama/pekerjaan/layanan..."
-          />
-          <DateRangePicker onSelect={setDateRange} />
-        </div>
-        <div className="flex gap-2">
-          <ExportExcel
-            data={filteredData}
-            filename={`data-survey-halaman-${page}`}
-            sheetName="Survey"
-          />
-        </div>
-      </div>
-
-      <Card>
-        <CardContent className="p-0 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">No</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Pekerjaan</TableHead>
-                <TableHead>JK</TableHead>
-                <TableHead>Usia</TableHead>
-                <TableHead>Layanan</TableHead>
-                <TableHead>Persyaratan</TableHead>
-                <TableHead>Prosedur</TableHead>
-                <TableHead>Kepuasan</TableHead>
-                <TableHead className="w-20">Detail</TableHead>
-                <TableHead className="w-20">Hapus</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={12}
-                    className="text-center py-8 text-gray-500"
-                  >
-                    Tidak ada data
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {(page - 1) * limit + index + 1}
-                    </TableCell>
-                    <TableCell>{item.Timestamp || "-"}</TableCell>
-                    <TableCell className="font-medium">
-                      {item.Nama || "-"}
-                    </TableCell>
-                    <TableCell>{item.Pekerjaan || "-"}</TableCell>
-                    <TableCell>{item["Jenis Kelamin"] || "-"}</TableCell>
-                    <TableCell>{item["Rentang Usia"] || "-"}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {item.Layanan || "-"}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {item.Persyaratan || "-"}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {item.Prosedur || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getBadgeColor(item.Kepuasan)}>
-                        {item.Kepuasan || "-"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Dialog
-                        open={dialogOpen && selectedSurvey === item}
-                        onOpenChange={(open) => {
-                          setDialogOpen(open);
-                          if (!open) setSelectedSurvey(null);
-                        }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedSurvey(item)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>
-                              Detail Survey - {item.Nama}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Informasi lengkap survey kepuasan
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedSurvey && (
-                            <Tabs defaultValue="identitas" className="w-full">
-                              <TabsList className="grid grid-cols-5 mb-4">
-                                <TabsTrigger value="identitas">
-                                  Identitas
-                                </TabsTrigger>
-                                <TabsTrigger value="layanan">
-                                  Layanan
-                                </TabsTrigger>
-                                <TabsTrigger value="petugas">
-                                  Petugas
-                                </TabsTrigger>
-                                <TabsTrigger value="pengaduan">
-                                  Pengaduan
-                                </TabsTrigger>
-                                <TabsTrigger value="sarana">Sarana</TabsTrigger>
-                              </TabsList>
-
-                              <TabsContent
-                                value="identitas"
-                                className="space-y-4"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Timestamp
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey.Timestamp}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Nama
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey.Nama}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Pekerjaan
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey.Pekerjaan}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Jenis Kelamin
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey["Jenis Kelamin"]}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Rentang Usia
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey["Rentang Usia"]}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Layanan
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey.Layanan}
-                                    </p>
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent
-                                value="layanan"
-                                className="space-y-4"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Persyaratan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Persyaratan,
-                                      )}
-                                    >
-                                      {selectedSurvey.Persyaratan}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Prosedur
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Prosedur,
-                                      )}
-                                    >
-                                      {selectedSurvey.Prosedur}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Waktu Proses
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Waktu Proses Berkas"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Waktu Proses Berkas"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Waktu Selesai Aduan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Waktu Selesai Aduan"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Waktu Selesai Aduan"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Waktu Aduan Online
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Waktu Aduan Online"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Waktu Aduan Online"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Waktu Respon Online
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Waktu Respon Online"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Waktu Respon Online"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Biaya
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedSurvey.Biaya}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kesesuaian Hasil
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Kesesuaian,
-                                      )}
-                                    >
-                                      {selectedSurvey.Kesesuaian}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent
-                                value="petugas"
-                                className="space-y-4"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Penguasaan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Penguasaan,
-                                      )}
-                                    >
-                                      {selectedSurvey.Penguasaan}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Komunikasi
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Komunikasi,
-                                      )}
-                                    >
-                                      {selectedSurvey.Komunikasi}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Komunikasi Online
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Komunikasi Online"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Komunikasi Online"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Sikap
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Sikap,
-                                      )}
-                                    >
-                                      {selectedSurvey.Sikap}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kerapian
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Kerapian,
-                                      )}
-                                    >
-                                      {selectedSurvey.Kerapian}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent
-                                value="pengaduan"
-                                className="space-y-4"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Keberadaan Pengaduan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Keberadaan Pengaduan"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Keberadaan Pengaduan"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Tata Cara
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Tata Cara Pengaduan"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Tata Cara Pengaduan"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Pengaduan Online
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Pengaduan Online"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Pengaduan Online"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Keberlanjutan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Keberlanjutan,
-                                      )}
-                                    >
-                                      {selectedSurvey.Keberlanjutan}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent value="sarana" className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kelengkapan Sarana
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Sarana Kelengkapan"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Sarana Kelengkapan"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kelayakan Sarana
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Sarana Kelayakan"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Sarana Kelayakan"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Sarana Toilet
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Sarana Toilet"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Sarana Toilet"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kebersihan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Kebersihan,
-                                      )}
-                                    >
-                                      {selectedSurvey.Kebersihan}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Front Officer
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Front Officer"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Front Officer"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Ketersediaan Info
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey[
-                                          "Ketersediaan Informasi"
-                                        ],
-                                      )}
-                                    >
-                                      {selectedSurvey["Ketersediaan Informasi"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kemanfaatan Online
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey["Kemanfaatan Online"],
-                                      )}
-                                    >
-                                      {selectedSurvey["Kemanfaatan Online"]}
-                                    </Badge>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Kepuasan
-                                    </p>
-                                    <Badge
-                                      className={getBadgeColor(
-                                        selectedSurvey.Kepuasan,
-                                      )}
-                                    >
-                                      {selectedSurvey.Kepuasan}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </TabsContent>
-                            </Tabs>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setItemToDelete({
-                            index,
-                            nama: item.Nama || "Unnamed",
-                          });
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-sm text-gray-500 order-2 sm:order-1">
-          Menampilkan halaman {page} dari {totalPages} • Total {totalData} data
-        </p>
-        <div className="flex gap-2 order-1 sm:order-2">
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" /> Sebelumnya
-          </Button>
-          <div className="hidden md:flex gap-1">
-            {[...Array(Math.min(5, totalPages))].map((_, i) => {
-              let pageNum = page;
-              if (page <= 3) pageNum = i + 1;
-              else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
-              else pageNum = page - 2 + i;
-              if (pageNum > 0 && pageNum <= totalPages) {
-                return (
-                  <Button
-                    key={i}
-                    variant={pageNum === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(pageNum)}
-                    className="w-10"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              }
-              return null;
-            })}
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="gap-2"
-          >
-            Selanjutnya <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={refresh}
+              variant="secondary"
+              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4" /> Filter
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Data</p>
+                <p className="text-3xl font-bold text-blue-600 mt-1">
+                  {stat.total}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">dari {total} total</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Sangat Puas</p>
+                <p className="text-3xl font-bold text-green-600 mt-1">
+                  {stat.sangatPuas}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round((stat.sangatPuas / totalKepuasan) * 100)}%
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-xl">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Puas</p>
+                <p className="text-3xl font-bold text-blue-600 mt-1">
+                  {stat.puas}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round((stat.puas / totalKepuasan) * 100)}%
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-xl">
+                <Star className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Cukup</p>
+                <p className="text-3xl font-bold text-yellow-600 mt-1">
+                  {stat.cukup}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round((stat.cukup / totalKepuasan) * 100)}%
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Kurang</p>
+                <p className="text-3xl font-bold text-red-600 mt-1">
+                  {stat.kurang}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {Math.round((stat.kurang / totalKepuasan) * 100)}%
+                </p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-xl">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter */}
+      {showFilters && (
+        <Card className="border-0 shadow-lg animate-in slide-in-from-top duration-300">
+          <CardContent className="p-6">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-4">
+                <Input
+                  placeholder="Cari nama/pekerjaan/layanan..."
+                  className="w-[300px]"
+                  onChange={(e) => debouncedSearch(e.target.value)}
+                />
+                <DatePicker date={selectedDate} setDate={setSelectedDate} />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={exportToExcel}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Excel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Virtual Table */}
+      <VirtualTable
+        data={filteredData}
+        columns={columns}
+        onRowClick={(item) => setSelectedSurvey(item)}
+        initialLoading={initialLoading}
+        loading={loading}
+        hasMore={hasMore}
+        loadMore={loadMore}
+        total={total}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={handleSort}
+        className="border-0 shadow-lg"
+        rowClassName="hover:bg-blue-50/50 transition-colors"
+        emptyMessage="Tidak ada data"
+        rowHeight={60}
+      />
+
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-5 h-5" />
+              Konfirmasi Hapus
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Apakah Anda yakin ingin menghapus data{" "}
               <span className="font-semibold">{itemToDelete?.nama}</span>?

@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getAduanDataPaginated } from "@/lib/apps-script";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SearchInput } from "@/components/filters/search-input";
-import { DateRangePicker } from "@/components/filters/date-range-picker";
-import { StatusFilter } from "@/components/filters/status-filter";
-import { ExportExcel } from "@/components/export/export-excel";
+import { useState, useEffect, useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Trash2,
+  Filter,
+  Calendar,
+  MapPin,
+  AlertCircle,
+  User,
+  Clock,
+  Download,
 } from "lucide-react";
 import { LoadingTable } from "@/components/ui/loading-spinner";
 import {
@@ -44,6 +36,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/filters/date-picker";
+import { VirtualTable } from "@/components/tables/virtual-table";
+import { useInfiniteData } from "@/hooks/use-infinite-data";
+import { getAduanDataOptimized, deleteData } from "@/lib/apps-script";
+import * as XLSX from "xlsx";
+import { format } from "date-fns";
+import debounce from "lodash/debounce";
 
 interface AduanItem {
   Timestamp: string;
@@ -56,20 +57,11 @@ interface AduanItem {
   "Lokasi Peristiwa": string;
   "Tanggal Kejadian": string;
   "Tindak Lanjut": string;
-  Status: string;
 }
 
 export default function AduanPage() {
-  const [data, setData] = useState<AduanItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalData, setTotalData] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(
-    null,
-  );
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [filteredData, setFilteredData] = useState<AduanItem[]>([]);
   const [selectedAduan, setSelectedAduan] = useState<AduanItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -79,36 +71,29 @@ export default function AduanPage() {
     nama: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("Timestamp");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const { toast } = useToast();
-  const limit = 50;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const result = await getAduanDataPaginated(page, limit);
-      setData(result.data);
-      setFilteredData(result.data);
-      setTotalPages(result.totalPages);
-      setTotalData(result.total);
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: "Gagal mengambil data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: aduanData,
+    initialLoading,
+    loading,
+    hasMore,
+    total,
+    loadMore,
+    refresh,
+    removeItem: removeLocalItem,
+  } = useInfiniteData({
+    fetchFn: (page, limit) => getAduanDataOptimized(page, limit),
+    initialLimit: 50,
+    enabled: true,
+  });
 
   useEffect(() => {
-    fetchData();
-  }, [page]);
-
-  useEffect(() => {
-    let filtered = [...data];
+    let filtered = [...aduanData];
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -121,87 +106,68 @@ export default function AduanPage() {
       );
     }
 
-    if (dateRange?.from && dateRange?.to) {
+    if (selectedDate) {
       filtered = filtered.filter((item) => {
         const itemDate = new Date(item.Timestamp || "");
-        return itemDate >= dateRange.from && itemDate <= dateRange.to;
+        return itemDate.toDateString() === selectedDate.toDateString();
       });
     }
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(
-        (item) => item.Status?.toLowerCase() === statusFilter.toLowerCase(),
-      );
+    if (sortBy) {
+      filtered.sort((a, b) => {
+        let valA = a[sortBy as keyof AduanItem] || "";
+        let valB = b[sortBy as keyof AduanItem] || "";
+
+        if (sortBy === "Timestamp") {
+          valA = new Date(valA).getTime();
+          valB = new Date(valB).getTime();
+        }
+
+        if (sortOrder === "asc") {
+          return valA > valB ? 1 : -1;
+        } else {
+          return valA < valB ? 1 : -1;
+        }
+      });
     }
 
     setFilteredData(filtered);
-  }, [searchTerm, dateRange, statusFilter, data]);
+  }, [searchTerm, selectedDate, aduanData, sortBy, sortOrder]);
+
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchTerm(value);
+      }, 500),
+    [],
+  );
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
     setDeleting(true);
     try {
-      console.log("🗑️ Menghapus data:", {
-        sheetName: "aduan", // GANTI SESUAI HALAMAN
-        rowIndex: (page - 1) * limit + itemToDelete.index,
-      });
+      const result = await deleteData("aduan", itemToDelete.index);
 
-      const response = await fetch("/api/proxy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          sheetName: "aduan", // GANTI SESUAI HALAMAN
-          rowIndex: (page - 1) * limit + itemToDelete.index,
-        }),
-      });
+      if (result.success) {
+        toast({
+          title: "Berhasil",
+          description: `Data aduan ${itemToDelete.nama} berhasil dihapus`,
+        });
 
-      const text = await response.text();
-      console.log("📥 Response text:", text);
-
-      if (!text || text.trim() === "") {
-        throw new Error("Response kosong dari server");
-      }
-
-      // Parse JSON
-      try {
-        const result = JSON.parse(text);
-        console.log("✅ Result (JSON):", result);
-
-        if (result.success) {
-          toast({
-            title: "Berhasil",
-            description: `Data ${itemToDelete.nama} berhasil dihapus`,
-          });
-          await fetchData();
-        } else {
-          throw new Error(result.error || "Gagal menghapus");
-        }
-      } catch (jsonError) {
-        // Fallback ke JSONP
-        const jsonMatch = text.match(/^([a-zA-Z0-9_]+)\((.*)\)$/);
-        if (jsonMatch && jsonMatch.length >= 3) {
-          const result = JSON.parse(jsonMatch[2]);
-          if (result.success) {
-            toast({
-              title: "Berhasil",
-              description: `Data ${itemToDelete.nama} berhasil dihapus`,
-            });
-            await fetchData();
-          } else {
-            throw new Error(result.error || "Gagal menghapus");
-          }
-        } else {
-          throw new Error("Format response tidak dikenal");
-        }
+        refresh();
+        removeLocalItem(itemToDelete.index);
+      } else {
+        throw new Error(result.error || "Gagal menghapus");
       }
     } catch (error) {
       console.error("❌ Delete error:", error);
       toast({
         title: "Gagal",
         description:
-          error instanceof Error ? error.message : "Terjadi kesalahan",
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat menghapus data",
         variant: "destructive",
       });
     } finally {
@@ -211,364 +177,415 @@ export default function AduanPage() {
     }
   };
 
+  const handleSort = (key: string) => {
+    if (sortBy === key) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(key);
+      setSortOrder("asc");
+    }
+  };
+
+  const exportToExcel = async () => {
+    try {
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Aduan");
+      XLSX.writeFile(
+        workbook,
+        `aduan_${format(new Date(), "yyyyMMdd_HHmm")}.xlsx`,
+      );
+
+      toast({
+        title: "Berhasil",
+        description: `Data berhasil diexport (${filteredData.length} baris)`,
+      });
+    } catch (error) {
+      toast({
+        title: "Gagal",
+        description: "Gagal mengexport data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name?.charAt(0).toUpperCase() || "?";
+  };
+
   const getStatistik = () => {
-    const total = filteredData.length;
-    const pending = filteredData.filter(
-      (item) => item.Status === "pending",
-    ).length;
-    const diproses = filteredData.filter(
-      (item) => item.Status === "diproses",
-    ).length;
-    const selesai = filteredData.filter(
-      (item) => item.Status === "selesai",
-    ).length;
-    return { total, pending, diproses, selesai };
+    return { total: filteredData.length };
   };
 
   const stat = getStatistik();
 
-  const getStatusBadge = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case "diproses":
-        return <Badge className="bg-blue-100 text-blue-800">Diproses</Badge>;
-      case "selesai":
-        return <Badge className="bg-green-100 text-green-800">Selesai</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">-</Badge>;
-    }
-  };
+  const columns = [
+    {
+      key: "no",
+      header: "No",
+      width: 60,
+      render: (_: any, index: number) => index + 1,
+    },
+    {
+      key: "timestamp",
+      header: "Tanggal",
+      width: 100,
+      sortable: true,
+      render: (item: any) => (
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3 h-3 text-gray-400" />
+          <span className="text-sm">
+            {new Date(item.Timestamp).toLocaleDateString("id-ID")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "nama",
+      header: "Nama",
+      width: 150,
+      sortable: true,
+      render: (item: any) => (
+        <div className="flex items-center gap-2">
+          <Avatar className="w-8 h-8 bg-red-100 flex-shrink-0">
+            <AvatarFallback className="text-red-600 font-semibold">
+              {getInitials(item.Nama)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="font-medium truncate">{item.Nama || "-"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "pekerjaan",
+      header: "Pekerjaan",
+      width: 120,
+      sortable: true,
+      render: (item: any) => item.Pekerjaan || "-",
+    },
+    {
+      key: "instansi",
+      header: "Instansi",
+      width: 150,
+      sortable: true,
+      render: (item: any) => item.Instansi || "-",
+    },
+    {
+      key: "jk",
+      header: "JK",
+      width: 50,
+      render: (item: any) => (
+        <Badge
+          variant="outline"
+          className={
+            item["Jenis Kelamin"] === "Laki-laki"
+              ? "bg-blue-50 text-blue-700 border-blue-200"
+              : "bg-pink-50 text-pink-700 border-pink-200"
+          }
+        >
+          {item["Jenis Kelamin"] === "Laki-laki" ? "L" : "P"}
+        </Badge>
+      ),
+    },
+    {
+      key: "usia",
+      header: "Usia",
+      width: 80,
+      render: (item: any) => item["Rentang Usia"] || "-",
+    },
+    {
+      key: "peristiwa",
+      header: "Peristiwa",
+      width: 200,
+      render: (item: any) => (
+        <div className="truncate" title={item["Hal Peristiwa"]}>
+          {item["Hal Peristiwa"]?.substring(0, 30)}...
+        </div>
+      ),
+    },
+    {
+      key: "lokasi",
+      header: "Lokasi",
+      width: 120,
+      render: (item: any) => (
+        <div className="flex items-center gap-1">
+          <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          <span className="text-sm truncate">
+            {item["Lokasi Peristiwa"] || "-"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "tglKejadian",
+      header: "Tgl Kejadian",
+      width: 100,
+      render: (item: any) => (
+        <div className="flex items-center gap-1">
+          <Clock className="w-3 h-3 text-gray-400 flex-shrink-0" />
+          <span className="text-sm">{item["Tanggal Kejadian"] || "-"}</span>
+        </div>
+      ),
+    },
+    {
+      key: "detail",
+      header: "Detail",
+      width: 60,
+      render: (item: any) => (
+        <Dialog
+          open={dialogOpen && selectedAduan === item}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setSelectedAduan(null);
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedAduan(item);
+              }}
+              className="hover:bg-red-100"
+            >
+              <Eye className="h-4 w-4 text-red-600" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-2xl">
+                <Avatar className="w-10 h-10 bg-red-100">
+                  <AvatarFallback className="text-red-600">
+                    {getInitials(item.Nama)}
+                  </AvatarFallback>
+                </Avatar>
+                Detail Aduan - {item.Nama}
+              </DialogTitle>
+              <DialogDescription>
+                Informasi lengkap aduan masyarakat
+              </DialogDescription>
+            </DialogHeader>
+            {selectedAduan && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <User className="w-4 h-4" /> Identitas Pelapor
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-500">Nama</p>
+                      <p className="font-medium">{selectedAduan.Nama}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Pekerjaan</p>
+                      <p className="font-medium">{selectedAduan.Pekerjaan}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Instansi</p>
+                      <p className="font-medium">{selectedAduan.Instansi}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Jenis Kelamin</p>
+                      <p className="font-medium">
+                        {selectedAduan["Jenis Kelamin"]}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Rentang Usia</p>
+                      <p className="font-medium">
+                        {selectedAduan["Rentang Usia"]}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Timestamp</p>
+                      <p className="font-medium">{selectedAduan.Timestamp}</p>
+                    </div>
+                  </div>
+                </div>
 
-  if (loading) return <LoadingTable />;
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" /> Detail Aduan
+                  </h3>
+                  <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">
+                        Hal/Peristiwa
+                      </p>
+                      <div className="bg-white p-3 rounded border">
+                        {selectedAduan["Hal Peristiwa"]}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Lokasi Peristiwa
+                        </p>
+                        <div className="bg-white p-2 rounded border flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span>{selectedAduan["Lokasi Peristiwa"]}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Tanggal Kejadian
+                        </p>
+                        <div className="bg-white p-2 rounded border flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span>{selectedAduan["Tanggal Kejadian"]}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 mb-1">
+                        Tindak Lanjut yang Diharapkan
+                      </p>
+                      <div className="bg-white p-3 rounded border">
+                        {selectedAduan["Tindak Lanjut"]}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      ),
+    },
+    {
+      key: "aksi",
+      header: "Aksi",
+      width: 60,
+      render: (item: any, index: number) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setItemToDelete({
+              index,
+              nama: item.Nama || "Unnamed",
+            });
+            setDeleteDialogOpen(true);
+          }}
+          className="hover:bg-red-100"
+        >
+          <Trash2 className="h-4 w-4 text-red-600" />
+        </Button>
+      ),
+    },
+  ];
+
+  if (initialLoading) return <LoadingTable />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Data Layanan Aduan</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Total {totalData} aduan masuk
-          </p>
-        </div>
-        <Button onClick={fetchData} variant="outline" className="gap-2">
-          <RefreshCw className="h-4 w-4" /> Refresh
-        </Button>
-      </div>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 to-red-800 p-6 text-white shadow-xl">
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Total Aduan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">{stat.total}</p>
-            <p className="text-xs text-gray-500">Dari {totalData} total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-yellow-600">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-yellow-600">{stat.pending}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-600">Diproses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-blue-600">{stat.diproses}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-600">Selesai</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-600">{stat.selesai}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex flex-wrap gap-4">
-          <SearchInput
-            onSearch={setSearchTerm}
-            placeholder="Cari nama/instansi/aduan..."
-          />
-          <DateRangePicker onSelect={setDateRange} />
-          <StatusFilter
-            onFilter={setStatusFilter}
-            options={[
-              { value: "pending", label: "Pending" },
-              { value: "diproses", label: "Diproses" },
-              { value: "selesai", label: "Selesai" },
-            ]}
-            placeholder="Filter Status"
-          />
-        </div>
-        <div className="flex gap-2">
-          <ExportExcel
-            data={filteredData}
-            filename={`data-aduan-halaman-${page}`}
-            sheetName="Aduan"
-          />
-        </div>
-      </div>
-
-      <Card>
-        <CardContent className="p-0 overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">No</TableHead>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Pekerjaan</TableHead>
-                <TableHead>Instansi</TableHead>
-                <TableHead>JK</TableHead>
-                <TableHead>Usia</TableHead>
-                <TableHead>Peristiwa</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Tgl Kejadian</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-20">Detail</TableHead>
-                <TableHead className="w-20">Hapus</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={13}
-                    className="text-center py-8 text-gray-500"
-                  >
-                    Tidak ada data
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
-                    <TableCell>{item.Timestamp || "-"}</TableCell>
-                    <TableCell className="font-medium">
-                      {item.Nama || "-"}
-                    </TableCell>
-                    <TableCell>{item.Pekerjaan || "-"}</TableCell>
-                    <TableCell>{item.Instansi || "-"}</TableCell>
-                    <TableCell>{item["Jenis Kelamin"] || "-"}</TableCell>
-                    <TableCell>{item["Rentang Usia"] || "-"}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {item["Hal Peristiwa"]?.substring(0, 30)}...
-                    </TableCell>
-                    <TableCell>{item["Lokasi Peristiwa"] || "-"}</TableCell>
-                    <TableCell>{item["Tanggal Kejadian"] || "-"}</TableCell>
-                    <TableCell>{getStatusBadge(item.Status)}</TableCell>
-                    <TableCell>
-                      <Dialog
-                        open={dialogOpen && selectedAduan === item}
-                        onOpenChange={(open) => {
-                          setDialogOpen(open);
-                          if (!open) setSelectedAduan(null);
-                        }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedAduan(item)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>
-                              Detail Aduan - {item.Nama}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Informasi lengkap aduan masyarakat
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedAduan && (
-                            <div className="space-y-6">
-                              <div className="space-y-2">
-                                <h3 className="font-semibold text-lg">
-                                  Identitas Pelapor
-                                </h3>
-                                <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Nama
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan.Nama}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Pekerjaan
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan.Pekerjaan}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Instansi
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan.Instansi}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Jenis Kelamin
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan["Jenis Kelamin"]}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Rentang Usia
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan["Rentang Usia"]}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500">
-                                      Timestamp
-                                    </p>
-                                    <p className="font-medium">
-                                      {selectedAduan.Timestamp}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <h3 className="font-semibold text-lg">
-                                  Detail Aduan
-                                </h3>
-                                <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                                  <div>
-                                    <p className="text-sm text-gray-500 mb-1">
-                                      Hal/Peristiwa
-                                    </p>
-                                    <div className="bg-white p-3 rounded border">
-                                      {selectedAduan["Hal Peristiwa"]}
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <p className="text-sm text-gray-500">
-                                        Lokasi Peristiwa
-                                      </p>
-                                      <p className="font-medium">
-                                        {selectedAduan["Lokasi Peristiwa"]}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <p className="text-sm text-gray-500">
-                                        Tanggal Kejadian
-                                      </p>
-                                      <p className="font-medium">
-                                        {selectedAduan["Tanggal Kejadian"]}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <p className="text-sm text-gray-500 mb-1">
-                                      Tindak Lanjut
-                                    </p>
-                                    <div className="bg-white p-3 rounded border">
-                                      {selectedAduan["Tindak Lanjut"]}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setItemToDelete({
-                            index,
-                            nama: item.Nama || "Unnamed",
-                          });
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-sm text-gray-500 order-2 sm:order-1">
-          Menampilkan halaman {page} dari {totalPages} • Total {totalData} data
-        </p>
-        <div className="flex gap-2 order-1 sm:order-2">
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="gap-2"
-          >
-            <ChevronLeft className="h-4 w-4" /> Sebelumnya
-          </Button>
-          <div className="hidden md:flex gap-1">
-            {[...Array(Math.min(5, totalPages))].map((_, i) => {
-              let pageNum = page;
-              if (page <= 3) pageNum = i + 1;
-              else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
-              else pageNum = page - 2 + i;
-              if (pageNum > 0 && pageNum <= totalPages) {
-                return (
-                  <Button
-                    key={i}
-                    variant={pageNum === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(pageNum)}
-                    className="w-10"
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              }
-              return null;
-            })}
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+              Data Layanan Aduan
+            </h1>
+            <p className="text-red-100 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Total {total} aduan telah masuk
+            </p>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="gap-2"
-          >
-            Selanjutnya <ChevronRight className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={refresh}
+              variant="secondary"
+              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4" /> Filter
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Statistik */}
+      <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-4">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Aduan</p>
+                <p className="text-3xl font-bold text-red-600 mt-1">
+                  {stat.total}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">dari {total} total</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-xl">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filter */}
+      {showFilters && (
+        <Card className="border-0 shadow-lg animate-in slide-in-from-top duration-300">
+          <CardContent className="p-6">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-4">
+                <Input
+                  placeholder="Cari nama/instansi/aduan..."
+                  className="w-[300px]"
+                  onChange={(e) => debouncedSearch(e.target.value)}
+                />
+                <DatePicker date={selectedDate} setDate={setSelectedDate} />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={exportToExcel}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Excel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Virtual Table */}
+      <VirtualTable
+        data={filteredData}
+        columns={columns}
+        onRowClick={(item) => setSelectedAduan(item)}
+        initialLoading={initialLoading}
+        loading={loading}
+        hasMore={hasMore}
+        loadMore={loadMore}
+        total={total}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSort={handleSort}
+        className="border-0 shadow-lg"
+        rowClassName="hover:bg-red-50/50 transition-colors"
+        emptyMessage="Tidak ada data"
+        rowHeight={60}
+      />
+
+      {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-5 h-5" />
+              Konfirmasi Hapus
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Apakah Anda yakin ingin menghapus data aduan dari{" "}
               <span className="font-semibold">{itemToDelete?.nama}</span>?
