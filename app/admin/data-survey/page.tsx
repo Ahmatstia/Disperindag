@@ -1,3 +1,4 @@
+// app/admin/data-survey/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -16,6 +17,9 @@ import {
   CheckCircle2,
   BarChart3,
   Download,
+  ChevronRight,
+  Search,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -36,7 +40,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -47,6 +50,8 @@ import { getSurveyDataOptimized, deleteData } from "@/lib/apps-script";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import debounce from "lodash/debounce";
+import Link from "next/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SurveyItem {
   Timestamp: string;
@@ -231,15 +236,15 @@ export default function SurveyPage() {
   };
 
   const getBadgeColor = (nilai: string) => {
-    if (nilai.includes("Sangat"))
+    if (nilai?.includes("Sangat"))
       return "bg-green-100 text-green-800 border-green-200";
-    if (nilai.includes("Puas") || nilai.includes("Baik"))
+    if (nilai?.includes("Puas") || nilai?.includes("Baik"))
       return "bg-blue-100 text-blue-800 border-blue-200";
-    if (nilai.includes("Cukup"))
+    if (nilai?.includes("Cukup"))
       return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    if (nilai.includes("Kurang"))
+    if (nilai?.includes("Kurang"))
       return "bg-orange-100 text-orange-800 border-orange-200";
-    if (nilai.includes("Tidak"))
+    if (nilai?.includes("Tidak"))
       return "bg-red-100 text-red-800 border-red-200";
     return "bg-gray-100 text-gray-800 border-gray-200";
   };
@@ -259,8 +264,9 @@ export default function SurveyPage() {
     const cukup = filteredData.filter((item) =>
       item.Kepuasan?.includes("Cukup"),
     ).length;
-    const kurang = filteredData.filter((item) =>
-      item.Kepuasan?.includes("Kurang"),
+    const kurang = filteredData.filter(
+      (item) =>
+        item.Kepuasan?.includes("Kurang") || item.Kepuasan?.includes("Tidak"),
     ).length;
 
     return { total, sangatPuas, puas, cukup, kurang };
@@ -273,19 +279,23 @@ export default function SurveyPage() {
     {
       key: "no",
       header: "No",
-      width: 60,
+      width: 50,
       render: (_: any, index: number) => index + 1,
     },
     {
       key: "timestamp",
       header: "Tanggal",
-      width: 100,
+      width: 90,
       sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-gray-400" />
-          <span className="text-sm">
-            {new Date(item.Timestamp).toLocaleDateString("id-ID")}
+          <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+          <span className="text-xs">
+            {new Date(item.Timestamp).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
           </span>
         </div>
       ),
@@ -293,38 +303,44 @@ export default function SurveyPage() {
     {
       key: "nama",
       header: "Nama",
-      width: 150,
+      width: 120,
       sortable: true,
       render: (item: any) => (
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 bg-blue-100 flex-shrink-0">
-            <AvatarFallback className="text-blue-600 font-semibold">
+          <Avatar className="w-6 h-6 bg-blue-100 shrink-0">
+            <AvatarFallback className="text-blue-600 text-xs">
               {getInitials(item.Nama)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium truncate">{item.Nama || "-"}</span>
+          <span className="text-xs truncate max-w-[80px]" title={item.Nama}>
+            {item.Nama || "-"}
+          </span>
         </div>
       ),
     },
     {
       key: "pekerjaan",
       header: "Pekerjaan",
-      width: 120,
+      width: 100,
       sortable: true,
-      render: (item: any) => item.Pekerjaan || "-",
+      render: (item: any) => (
+        <span className="text-xs truncate" title={item.Pekerjaan}>
+          {item.Pekerjaan || "-"}
+        </span>
+      ),
     },
     {
       key: "jk",
       header: "JK",
-      width: 50,
+      width: 40,
       render: (item: any) => (
         <Badge
           variant="outline"
-          className={
+          className={`text-[10px] px-1 py-0 ${
             item["Jenis Kelamin"] === "Laki-laki"
               ? "bg-blue-50 text-blue-700 border-blue-200"
               : "bg-pink-50 text-pink-700 border-pink-200"
-          }
+          }`}
         >
           {item["Jenis Kelamin"] === "Laki-laki" ? "L" : "P"}
         </Badge>
@@ -333,36 +349,41 @@ export default function SurveyPage() {
     {
       key: "usia",
       header: "Usia",
-      width: 80,
-      render: (item: any) => item["Rentang Usia"] || "-",
+      width: 60,
+      render: (item: any) => (
+        <span className="text-xs">{item["Rentang Usia"] || "-"}</span>
+      ),
     },
     {
       key: "layanan",
       header: "Layanan",
-      width: 120,
+      width: 100,
       render: (item: any) => (
         <Badge
           variant="outline"
-          className="bg-purple-50 text-purple-700 border-purple-200"
+          className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-1 py-0 truncate max-w-[90px]"
+          title={item.Layanan}
         >
-          {item.Layanan?.substring(0, 15) || "-"}
+          {item.Layanan || "-"}
         </Badge>
       ),
     },
     {
       key: "kepuasan",
       header: "Kepuasan",
-      width: 100,
+      width: 90,
       render: (item: any) => (
-        <Badge className={getBadgeColor(item.Kepuasan)}>
+        <Badge
+          className={`${getBadgeColor(item.Kepuasan)} text-[10px] px-1 py-0`}
+        >
           {item.Kepuasan || "-"}
         </Badge>
       ),
     },
     {
       key: "detail",
-      header: "Detail",
-      width: 60,
+      header: "",
+      width: 40,
       render: (item: any) => (
         <Dialog
           open={dialogOpen && selectedSurvey === item}
@@ -379,9 +400,9 @@ export default function SurveyPage() {
                 e.stopPropagation();
                 setSelectedSurvey(item);
               }}
-              className="hover:bg-blue-100"
+              className="hover:bg-blue-100 h-6 w-6 p-0"
             >
-              <Eye className="h-4 w-4 text-blue-600" />
+              <Eye className="h-3 w-3 text-blue-600" />
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -588,8 +609,8 @@ export default function SurveyPage() {
     },
     {
       key: "aksi",
-      header: "Aksi",
-      width: 60,
+      header: "",
+      width: 40,
       render: (item: any, index: number) => (
         <Button
           variant="ghost"
@@ -602,192 +623,230 @@ export default function SurveyPage() {
             });
             setDeleteDialogOpen(true);
           }}
-          className="hover:bg-red-100"
+          className="hover:bg-red-100 h-6 w-6 p-0"
         >
-          <Trash2 className="h-4 w-4 text-red-600" />
+          <Trash2 className="h-3 w-3 text-red-600" />
         </Button>
       ),
     },
   ];
 
+  const totalWidth = columns.reduce(
+    (acc, col) => acc + (col.width as number),
+    0,
+  );
+
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link
+          href="/admin/dashboard"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Dashboard
+        </Link>
+        <ChevronRight className="w-4 h-4 text-gray-400" />
+        <span className="font-medium text-gray-700">Data Survey</span>
+      </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Header */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 className="text-2xl font-bold text-gray-800">
               Data Survey Kepuasan
             </h1>
-            <p className="text-blue-100 flex items-center gap-2">
-              <Users className="w-4 h-4" />
+            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-500" />
               Total {total} responden telah mengisi survey
             </p>
           </div>
           <div className="flex gap-2">
             <Button
               onClick={refresh}
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              variant="outline"
+              className="gap-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600"
             >
               <RefreshCw className="h-4 w-4" /> Refresh
             </Button>
             <Button
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              variant="outline"
+              className="gap-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <Filter className="h-4 w-4" /> Filter
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Statistik */}
+      {/* Statistik Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Data</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Total Data</p>
+                <p className="text-xl font-bold text-blue-600 mt-1">
                   {stat.total}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">dari {total} total</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <BarChart3 className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <BarChart3 className="w-4 h-4 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-white">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Sangat Puas</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Sangat Puas</p>
+                <p className="text-xl font-bold text-green-600 mt-1">
                   {stat.sangatPuas}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-0.5">
                   {Math.round((stat.sangatPuas / totalKepuasan) * 100)}%
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-xl">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="p-2 bg-green-50 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Puas</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Puas</p>
+                <p className="text-xl font-bold text-blue-600 mt-1">
                   {stat.puas}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-0.5">
                   {Math.round((stat.puas / totalKepuasan) * 100)}%
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-xl">
-                <Star className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Star className="w-4 h-4 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-50 to-white">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Cukup</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Cukup</p>
+                <p className="text-xl font-bold text-yellow-600 mt-1">
                   {stat.cukup}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-0.5">
                   {Math.round((stat.cukup / totalKepuasan) * 100)}%
                 </p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-xl">
-                <TrendingUp className="w-6 h-6 text-yellow-600" />
+              <div className="p-2 bg-yellow-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 text-yellow-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-white">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Kurang</p>
-                <p className="text-3xl font-bold text-red-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Kurang</p>
+                <p className="text-xl font-bold text-red-600 mt-1">
                   {stat.kurang}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-[10px] text-gray-400 mt-0.5">
                   {Math.round((stat.kurang / totalKepuasan) * 100)}%
                 </p>
               </div>
-              <div className="p-3 bg-red-100 rounded-xl">
-                <AlertCircle className="w-6 h-6 text-red-600" />
+              <div className="p-2 bg-red-50 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filter */}
+      {/* Filter Panel */}
       {showFilters && (
-        <Card className="border-0 shadow-lg animate-in slide-in-from-top duration-300">
-          <CardContent className="p-6">
+        <Card className="border border-gray-200 animate-in slide-in-from-top duration-300">
+          <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4">
-                <Input
-                  placeholder="Cari nama/pekerjaan/layanan..."
-                  className="w-[300px]"
-                  onChange={(e) => debouncedSearch(e.target.value)}
-                />
+              <div className="flex flex-wrap gap-4 flex-1">
+                <div className="relative flex-1 min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Cari nama/pekerjaan/layanan..."
+                    className="pl-9 border-gray-200 h-9 text-sm"
+                    onChange={(e) => debouncedSearch(e.target.value)}
+                  />
+                </div>
                 <DatePicker
                   date={selectedDate}
                   setDate={setSelectedDate}
-                  placeholder="Filter berdasarkan tanggal"
+                  placeholder="Filter tanggal"
                 />
+                {selectedDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedDate(null)}
+                    className="text-red-600 hover:bg-red-50 h-9 px-2"
+                  >
+                    <X className="h-4 w-4 mr-1" /> Reset
+                  </Button>
+                )}
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={exportToExcel}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Excel
-                </Button>
-              </div>
+              <Button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white gap-2 h-9"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Info Total Data */}
+      <div className="text-sm text-gray-500">
+        Menampilkan {filteredData.length} dari {total} data
+      </div>
+
       {/* Virtual Table */}
-      <VirtualTable
-        data={filteredData}
-        columns={columns}
-        onRowClick={(item) => setSelectedSurvey(item)}
-        initialLoading={initialLoading}
-        loading={loading}
-        hasMore={hasMore}
-        loadMore={loadMore}
-        total={total}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        className="border-0 shadow-lg"
-        rowClassName="hover:bg-blue-50/50 transition-colors"
-        emptyMessage="Tidak ada data"
-        rowHeight={60}
-      />
+      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+        <VirtualTable
+          data={filteredData}
+          columns={columns}
+          onRowClick={(item) => {
+            setSelectedSurvey(item);
+            setDialogOpen(true);
+          }}
+          initialLoading={initialLoading}
+          loading={loading}
+          hasMore={hasMore}
+          loadMore={loadMore}
+          total={total}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          className="border-0"
+          rowClassName="hover:bg-blue-50/50 transition-colors cursor-pointer"
+          emptyMessage="Tidak ada data survey"
+          rowHeight={48}
+        />
+      </div>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

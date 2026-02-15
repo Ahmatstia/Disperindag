@@ -254,6 +254,7 @@ export async function getTamuDataOptimized(
 ) {
   try {
     const data = await fetchFromProxy(forceRefresh);
+
     if (!data || !data.tamu)
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
 

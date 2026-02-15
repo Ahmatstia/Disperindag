@@ -13,11 +13,25 @@ export async function GET() {
     });
 
     const text = await response.text();
-    console.log("📥 [GET] Response:", text.substring(0, 200));
+    // console.log("📥 [GET] Response:", text.substring(0, 200));
 
-    const jsonMatch = text.match(/callback\((.*)\)/);
+    // 1. Coba parse sebagai JSON langsung (siapa tahu format berubah jadi JSON)
+    try {
+      const jsonData = JSON.parse(text);
+      return NextResponse.json(jsonData);
+    } catch (e) {
+      // Ignore error, lanjut cek JSONP
+    }
+
+    // 2. Coba parse sebagai JSONP (callback({...}))
+    // Regex diperbaiki untuk handle multiline ([\s\S]*)
+    const jsonMatch = text.match(/callback\(([\s\S]*)\)/);
     if (!jsonMatch) {
-      return NextResponse.json({ error: "Invalid response" }, { status: 500 });
+      console.error("❌ Invalid response format:", text.substring(0, 100));
+      return NextResponse.json(
+        { error: "Invalid response format", raw: text.substring(0, 100) },
+        { status: 500 },
+      );
     }
 
     const data = JSON.parse(jsonMatch[1]);

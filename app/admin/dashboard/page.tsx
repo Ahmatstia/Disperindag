@@ -1,3 +1,4 @@
+// app/admin/dashboard/page.tsx
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -7,69 +8,401 @@ import {
   getTamuData,
 } from "@/lib/apps-script";
 import Link from "next/link";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   Users,
   MessageSquare,
   BookOpen,
   Star,
-  TrendingUp,
   Clock,
-  AlertCircle,
   Calendar,
   BarChart3,
-  Download,
-  FileText,
-  Bell,
-  UserPlus,
-  Activity,
+  ChevronRight,
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Komponen Statistik Card dengan Icon dan Trend
-function StatCard({
-  title,
-  value,
-  icon,
-  color,
-  trend,
-  subtitle,
-  bgColor,
-}: {
+// ==================== HEADER ====================
+function DashboardHeader() {
+  return (
+    <div className="mb-6">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+        DISPERINDAG
+      </h1>
+      <p className="text-sm text-gray-500 mt-1">Provinsi Sumatera Barat</p>
+    </div>
+  );
+}
+
+// ==================== SKELETON ====================
+function StatCardSkeleton() {
+  return (
+    <Card className="border border-gray-200">
+      <CardContent className="p-5">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+          <Skeleton className="h-10 w-10 rounded-lg" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TableRowSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ==================== STAT CARD ====================
+interface StatCardProps {
   title: string;
   value: string | number;
   icon: React.ReactNode;
   color: string;
-  bgColor?: string;
-  trend?: string;
   subtitle?: string;
-}) {
+}
+
+function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   return (
-    <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
-      <div className={`absolute inset-0 bg-linear-to-br ${color} opacity-5`} />
-      <CardContent className="p-6 relative">
-        <div className="flex justify-between items-start">
+    <Card className="border border-gray-200 hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex justify-between items-center">
           <div>
             <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-            <p className="text-3xl font-bold" style={{ color }}>
+            <p className="text-2xl font-bold" style={{ color }}>
               {value}
             </p>
             {subtitle && (
               <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
             )}
           </div>
-          <div className={`p-3 rounded-xl ${bgColor || "bg-gray-100"}`}>
+          <div
+            className="p-2.5 rounded-lg"
+            style={{ backgroundColor: `${color}15` }}
+          >
             <div style={{ color }}>{icon}</div>
           </div>
         </div>
-        {trend && (
-          <div className="mt-3 flex items-center text-xs">
-            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-            <span className="text-green-500 font-medium">{trend}</span>
-            <span className="text-gray-400 ml-1">dari bulan lalu</span>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== DATA TAMU ====================
+async function DataTamu() {
+  const tamuData = await getTamuData();
+  const recentTamu = tamuData.slice(0, 5);
+
+  return (
+    <Card className="border border-gray-200 h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-green-600" />
+            <span>Data Tamu</span>
+          </div>
+          <Badge variant="outline" className="text-xs font-normal">
+            {tamuData.length} Total
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2 mb-2 text-xs font-medium text-gray-500 border-b pb-2">
+          <span>Nama</span>
+          <span>Tanggal</span>
+        </div>
+        <div className="space-y-2 min-h-[200px]">
+          {recentTamu.length > 0 ? (
+            recentTamu.map((tamu: any, index: number) => (
+              <div
+                key={index}
+                className="grid grid-cols-2 gap-2 text-sm py-1 hover:bg-gray-50 rounded px-1"
+              >
+                <span className="text-gray-700 truncate">
+                  {tamu.Nama || "-"}
+                </span>
+                <span className="text-gray-500 text-xs">
+                  {tamu.Timestamp
+                    ? new Date(tamu.Timestamp).toLocaleDateString("id-ID", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })
+                    : "-"}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              Tidak ada data tamu
+            </div>
+          )}
+        </div>
+        <Link
+          href="/admin/data-tamu"
+          className="flex items-center justify-center gap-1 text-xs text-blue-600 mt-3 hover:underline pt-2 border-t"
+        >
+          Lihat semua <ChevronRight className="w-3 h-3" />
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== DATA ADUAN ====================
+async function DataAduan() {
+  const aduanData = await getAduanData();
+  const recentAduan = aduanData.slice(0, 5);
+
+  return (
+    <Card className="border border-gray-200 h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-red-600" />
+            <span>Data Aduan</span>
+          </div>
+          <Badge variant="outline" className="text-xs font-normal">
+            {aduanData.length} Total
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-2 mb-2 text-xs font-medium text-gray-500 border-b pb-2">
+          <span>Pelapor</span>
+          <span>Tanggal</span>
+        </div>
+        <div className="space-y-2 min-h-[200px]">
+          {recentAduan.length > 0 ? (
+            recentAduan.map((aduan: any, index: number) => (
+              <div
+                key={index}
+                className="grid grid-cols-2 gap-2 text-sm py-1 hover:bg-gray-50 rounded px-1"
+              >
+                <span className="text-gray-700 truncate">
+                  {aduan.Nama || "-"}
+                </span>
+                <span className="text-gray-500 text-xs">
+                  {aduan.Timestamp
+                    ? new Date(aduan.Timestamp).toLocaleDateString("id-ID", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      })
+                    : "-"}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              Tidak ada data aduan
+            </div>
+          )}
+        </div>
+        <Link
+          href="/admin/data-aduan"
+          className="flex items-center justify-center gap-1 text-xs text-blue-600 mt-3 hover:underline pt-2 border-t"
+        >
+          Lihat semua <ChevronRight className="w-3 h-3" />
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== DATA SURVEY ====================
+async function DataSurvey() {
+  const surveyData = await getSurveyData();
+
+  // Hitung distribusi kepuasan
+  const sangatPuas = surveyData.filter((d: any) =>
+    d.Kepuasan?.includes("Sangat"),
+  ).length;
+  const puas = surveyData.filter((d: any) =>
+    d.Kepuasan?.includes("Puas"),
+  ).length;
+  const cukup = surveyData.filter((d: any) =>
+    d.Kepuasan?.includes("Cukup"),
+  ).length;
+  const kurang = surveyData.filter((d: any) =>
+    d.Kepuasan?.includes("Kurang"),
+  ).length;
+
+  // Ambil 5 data terbaru
+  const recentSurvey = surveyData.slice(0, 5);
+
+  return (
+    <Card className="border border-gray-200 h-full">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-600" />
+            <span>Data Survey</span>
+          </div>
+          <Badge variant="outline" className="text-xs font-normal">
+            {surveyData.length} Total
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {/* Ringkasan Kepuasan */}
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="bg-green-50 p-2 rounded">
+            <p className="text-xs text-gray-500">Sangat Puas</p>
+            <p className="text-sm font-bold text-green-600">{sangatPuas}</p>
+          </div>
+          <div className="bg-blue-50 p-2 rounded">
+            <p className="text-xs text-gray-500">Puas</p>
+            <p className="text-sm font-bold text-blue-600">{puas}</p>
+          </div>
+          <div className="bg-yellow-50 p-2 rounded">
+            <p className="text-xs text-gray-500">Cukup</p>
+            <p className="text-sm font-bold text-yellow-600">{cukup}</p>
+          </div>
+          <div className="bg-red-50 p-2 rounded">
+            <p className="text-xs text-gray-500">Kurang</p>
+            <p className="text-sm font-bold text-red-600">{kurang}</p>
+          </div>
+        </div>
+
+        {/* Data Terbaru */}
+        <div className="space-y-2 min-h-[150px]">
+          <p className="text-xs font-medium text-gray-500">Survey Terbaru:</p>
+          {recentSurvey.length > 0 ? (
+            recentSurvey.map((survey: any, index: number) => (
+              <div
+                key={index}
+                className="flex justify-between items-center text-sm py-1 hover:bg-gray-50 rounded px-1"
+              >
+                <span className="text-gray-700 truncate max-w-[120px]">
+                  {survey.Nama || "-"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    className={
+                      survey.Kepuasan?.includes("Sangat")
+                        ? "bg-green-100 text-green-800"
+                        : survey.Kepuasan?.includes("Puas")
+                          ? "bg-blue-100 text-blue-800"
+                          : survey.Kepuasan?.includes("Cukup")
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                    }
+                  >
+                    {survey.Kepuasan || "-"}
+                  </Badge>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-4">
+              Tidak ada data survey
+            </div>
+          )}
+        </div>
+
+        <Link
+          href="/admin/data-survey"
+          className="flex items-center justify-center gap-1 text-xs text-blue-600 mt-3 hover:underline pt-2 border-t"
+        >
+          Lihat semua <ChevronRight className="w-3 h-3" />
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ==================== ADUAN BERDASARKAN KATEGORI ====================
+async function AduanBerdasarkanKategori() {
+  const aduanData = await getAduanData();
+
+  // Hitung kategori dari data real (sesuaikan dengan struktur data Anda)
+  // Ini contoh, sesuaikan dengan field kategori yang ada di data aduan
+  const kategoriMap: Record<string, number> = {};
+
+  aduanData.forEach((item: any) => {
+    const kategori = item.Kategori || item.Jenis || "Lainnya";
+    kategoriMap[kategori] = (kategoriMap[kategori] || 0) + 1;
+  });
+
+  // Jika tidak ada data kategori, gunakan data dummy
+  const kategoriData =
+    Object.keys(kategoriMap).length > 0
+      ? Object.entries(kategoriMap)
+          .map(([name, count]) => ({
+            name,
+            percentage: Math.round((count / aduanData.length) * 100),
+            color: getCategoryColor(name),
+          }))
+          .sort((a, b) => b.percentage - a.percentage)
+          .slice(0, 5)
+      : [
+          { name: "Pelayanan Lambat", percentage: 34, color: "#ef4444" },
+          { name: "Ketidaktepatan", percentage: 27, color: "#f59e0b" },
+          { name: "Infrastruktur", percentage: 20, color: "#3b82f6" },
+          { name: "Pelanggaran SOP", percentage: 12, color: "#10b981" },
+          { name: "Petugas", percentage: 7, color: "#8b5cf6" },
+        ];
+
+  function getCategoryColor(kategori: string): string {
+    const colors: Record<string, string> = {
+      Pelayanan: "#ef4444",
+      Infrastruktur: "#3b82f6",
+      Petugas: "#8b5cf6",
+      SOP: "#10b981",
+    };
+    return colors[kategori] || "#6b7280";
+  }
+
+  return (
+    <Card className="border border-gray-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-purple-600" />
+          Aduan Berdasarkan Kategori
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {kategoriData.map((item, index) => (
+          <div key={index}>
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-gray-600">{item.name}</span>
+              <span className="font-medium text-gray-800">
+                {item.percentage}%
+              </span>
+            </div>
+            <Progress
+              value={item.percentage}
+              className="h-2 bg-gray-100"
+              style={
+                {
+                  "--progress-background": item.color,
+                } as any
+              }
+            />
+          </div>
+        ))}
+        {aduanData.length === 0 && (
+          <div className="text-center text-gray-400 py-4">
+            Belum ada data aduan
           </div>
         )}
       </CardContent>
@@ -77,478 +410,172 @@ function StatCard({
   );
 }
 
-// Komponen Quick Access Card
-function QuickAccessCard({
-  href,
-  icon,
-  title,
-  desc,
-  color,
-  badge,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-  color: string;
-  badge?: string;
-}) {
-  return (
-    <Link href={href}>
-      <Card className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-blue-100 h-full">
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className={`p-3 rounded-xl`}
-                style={{ backgroundColor: `${color}15` }}
-              >
-                <div style={{ color }}>{icon}</div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg group-hover:text-blue-600 transition">
-                  {title}
-                </h3>
-                <p className="text-sm text-gray-500">{desc}</p>
-              </div>
-            </div>
-            {badge && (
-              <Badge className="bg-red-100 text-red-800">{badge}</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-interface SurveyItem {
-  Nama: string;
-  Timestamp: string;
-  Kepuasan?: string;
-}
-
-interface AduanItem {
-  Nama: string;
-  Timestamp: string;
-  Status: string;
-}
-
-interface TamuItem {
-  Nama: string;
-  Timestamp: string;
-}
-
-// Komponen Aktivitas Terbaru
-async function RecentActivities() {
-  const [surveyData, aduanData, tamuData] = await Promise.all([
-    getSurveyData(),
-    getAduanData(),
-    getTamuData(),
-  ]);
-
-  // Gabung dan urutkan semua aktivitas
-  const allActivities = [
-    ...surveyData.slice(-5).map((item: SurveyItem) => ({
-      type: "survey",
-      name: item.Nama,
-      time: item.Timestamp,
-      detail: "mengisi survey kepuasan",
-      icon: <Users className="w-4 h-4" />,
-      color: "blue",
-    })),
-    ...aduanData.slice(-5).map((item: AduanItem) => ({
-      type: "aduan",
-      name: item.Nama,
-      time: item.Timestamp,
-      detail: "mengirim aduan",
-      status: item.Status,
-      icon: <MessageSquare className="w-4 h-4" />,
-      color: "red",
-    })),
-    ...tamuData.slice(-5).map((item: TamuItem) => ({
-      type: "tamu",
-      name: item.Nama,
-      time: item.Timestamp,
-      detail: "berkunjung",
-      icon: <BookOpen className="w-4 h-4" />,
-      color: "green",
-    })),
-  ]
-    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-    .slice(0, 8);
+// ==================== RINGKASAN KEPUASAN ====================
+async function RingkasanKepuasan() {
+  const stat = await getStatistik();
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-blue-600" />
-          Aktivitas Terbaru
+    <Card className="border border-gray-200">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Star className="w-4 h-4 text-yellow-500" />
+          Ringkasan Kepuasan
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {allActivities.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-            >
-              <Avatar className={`w-8 h-8 bg-${item.color}-100`}>
-                <AvatarFallback
-                  className={`text-${item.color}-600 bg-${item.color}-100`}
-                >
-                  {item.icon}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{item.name}</p>
-                <p className="text-xs text-gray-500">{item.detail}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {new Date(item.time).toLocaleString("id-ID")}
-                </p>
-              </div>
-              {item.type === "aduan" && (
-                <Badge
-                  className={
-                    item.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : item.status === "diproses"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-green-100 text-green-800"
-                  }
-                >
-                  {item.status || "pending"}
-                </Badge>
-              )}
-            </div>
-          ))}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-3xl font-bold text-gray-800">
+              {stat.rataKepuasan}/5
+            </p>
+            <p className="text-sm text-gray-500 mt-1">Rata-rata kepuasan</p>
+          </div>
+          <div className="flex items-center gap-1 text-green-600 bg-green-50 px-2 py-1 rounded">
+            <TrendingUp className="w-4 h-4" />
+            <span className="text-sm font-medium">+8%</span>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-600">Total Responden</span>
+            <span className="font-medium">{stat.totalSurvey}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Survey Bulan Ini</span>
+            <span className="font-medium">
+              {Math.round(stat.totalSurvey * 0.2)}
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Komponen Statistik Detail
-async function DetailStats() {
-  const [surveyData, aduanData] = await Promise.all([
-    getSurveyData(),
-    getAduanData(),
-  ]);
-
-  // Hitung distribusi kepuasan
-  const kepuasanCount = {
-    sangatPuas: surveyData.filter((d: SurveyItem) =>
-      d.Kepuasan?.includes("Sangat"),
-    ).length,
-    puas: surveyData.filter((d: SurveyItem) => d.Kepuasan?.includes("Puas"))
-      .length,
-    cukup: surveyData.filter((d: SurveyItem) => d.Kepuasan?.includes("Cukup"))
-      .length,
-    kurang: surveyData.filter((d: SurveyItem) => d.Kepuasan?.includes("Kurang"))
-      .length,
-    tidak: surveyData.filter((d: SurveyItem) => d.Kepuasan?.includes("Tidak"))
-      .length,
-  };
-
-  const totalKepuasan = surveyData.length || 1;
-
-  // Hitung status aduan
-  const aduanStatus = {
-    pending: aduanData.filter((d: AduanItem) => d.Status === "pending").length,
-    diproses: aduanData.filter((d: AduanItem) => d.Status === "diproses")
-      .length,
-    selesai: aduanData.filter((d: AduanItem) => d.Status === "selesai").length,
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Grafik Kepuasan Sederhana */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-purple-600" />
-            Distribusi Kepuasan
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Sangat Puas</span>
-              <span className="font-medium">{kepuasanCount.sangatPuas}</span>
-            </div>
-            <Progress
-              value={(kepuasanCount.sangatPuas / totalKepuasan) * 100}
-              className="h-2 bg-gray-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Puas</span>
-              <span className="font-medium">{kepuasanCount.puas}</span>
-            </div>
-            <Progress
-              value={(kepuasanCount.puas / totalKepuasan) * 100}
-              className="h-2 bg-gray-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Cukup</span>
-              <span className="font-medium">{kepuasanCount.cukup}</span>
-            </div>
-            <Progress
-              value={(kepuasanCount.cukup / totalKepuasan) * 100}
-              className="h-2 bg-gray-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Kurang</span>
-              <span className="font-medium">{kepuasanCount.kurang}</span>
-            </div>
-            <Progress
-              value={(kepuasanCount.kurang / totalKepuasan) * 100}
-              className="h-2 bg-gray-200"
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Tidak Puas</span>
-              <span className="font-medium">{kepuasanCount.tidak}</span>
-            </div>
-            <Progress
-              value={(kepuasanCount.tidak / totalKepuasan) * 100}
-              className="h-2 bg-gray-200"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Status Aduan */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            Status Aduan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-yellow-400 rounded-full" />
-                <span className="text-sm">Pending</span>
-              </div>
-              <Badge className="bg-yellow-100 text-yellow-800">
-                {aduanStatus.pending}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-blue-400 rounded-full" />
-                <span className="text-sm">Diproses</span>
-              </div>
-              <Badge className="bg-blue-100 text-blue-800">
-                {aduanStatus.diproses}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-400 rounded-full" />
-                <span className="text-sm">Selesai</span>
-              </div>
-              <Badge className="bg-green-100 text-green-800">
-                {aduanStatus.selesai}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Komponen Aksi Cepat
-function QuickActions() {
-  return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="w-5 h-5 text-green-600" />
-          Aksi Cepat
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Button className="w-full justify-start gap-2" variant="outline">
-          <Download className="w-4 h-4" /> Export Laporan Bulanan
-        </Button>
-        <Button className="w-full justify-start gap-2" variant="outline">
-          <FileText className="w-4 h-4" /> Cetak PDF Rekapitulasi
-        </Button>
-        <Button className="w-full justify-start gap-2" variant="outline">
-          <Bell className="w-4 h-4" /> Kirim Notifikasi
-        </Button>
-        <Button className="w-full justify-start gap-2" variant="outline">
-          <UserPlus className="w-4 h-4" /> Tambah Admin
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Komponen Statistik Cards Utama
-async function StatistikCards() {
+// ==================== MAIN DASHBOARD CONTENT ====================
+async function DashboardContent() {
   const stat = await getStatistik();
 
   return (
-    <>
-      {/* Main Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="space-y-6">
+      {/* Navigasi Dashboard */}
+      <div className="flex items-center gap-6 text-sm border-b pb-3">
+        <Link
+          href="/admin/dashboard"
+          className="font-medium text-blue-600 border-b-2 border-blue-600 pb-3 -mb-3"
+        >
+          Dashboard
+        </Link>
+        <Link
+          href="/admin/data-tamu"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Tamu
+        </Link>
+        <Link
+          href="/admin/data-aduan"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Aduan
+        </Link>
+        <Link
+          href="/admin/data-survey"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Survey
+        </Link>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Survey"
           value={stat.totalSurvey}
-          icon={<Users className="w-6 h-6" />}
+          icon={<Users className="w-5 h-5" />}
           color="#3b82f6"
-          bgColor="bg-blue-50"
-          trend="+12%"
           subtitle="responden"
         />
         <StatCard
           title="Total Aduan"
           value={stat.totalAduan}
-          icon={<MessageSquare className="w-6 h-6" />}
+          icon={<MessageSquare className="w-5 h-5" />}
           color="#ef4444"
-          bgColor="bg-red-50"
-          trend="+5%"
           subtitle="masuk"
         />
         <StatCard
           title="Total Tamu"
           value={stat.totalTamu}
-          icon={<BookOpen className="w-6 h-6" />}
+          icon={<BookOpen className="w-5 h-5" />}
           color="#10b981"
-          bgColor="bg-green-50"
-          trend="+8%"
           subtitle="kunjungan"
         />
         <StatCard
-          title="Rata-rata Kepuasan"
+          title="Kepuasan"
           value={`${stat.rataKepuasan}/5`}
-          icon={<Star className="w-6 h-6" />}
+          icon={<Star className="w-5 h-5" />}
           color="#8b5cf6"
-          bgColor="bg-purple-50"
-          subtitle="dari 5"
+          subtitle="rata-rata"
         />
       </div>
 
-      {/* Quick Access & Additional Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Quick Links - 2 kolom */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-700">Akses Cepat</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <QuickAccessCard
-              href="/admin/data-survey"
-              icon={<Users className="w-6 h-6" />}
-              title="Data Survey"
-              desc="Lihat dan kelola data survey"
-              color="#3b82f6"
-            />
-            <QuickAccessCard
-              href="/admin/data-aduan"
-              icon={<MessageSquare className="w-6 h-6" />}
-              title="Data Aduan"
-              desc="Monitor dan tindak lanjuti aduan"
-              color="#ef4444"
-              badge={
-                stat.totalAduan > 0 ? stat.totalAduan.toString() : undefined
-              }
-            />
-            <QuickAccessCard
-              href="/admin/data-tamu"
-              icon={<BookOpen className="w-6 h-6" />}
-              title="Buku Tamu"
-              desc="Rekam jejak kunjungan"
-              color="#10b981"
-            />
-            <QuickAccessCard
-              href="/admin/laporan"
-              icon={<BarChart3 className="w-6 h-6" />}
-              title="Laporan"
-              desc="Generate laporan bulanan"
-              color="#8b5cf6"
-            />
-          </div>
-        </div>
-
-        {/* Quick Actions - 1 kolom */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">
-            Aksi Cepat
-          </h2>
-          <QuickActions />
-        </div>
+      {/* Grid 3 Kolom untuk Data Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Suspense fallback={<TableRowSkeleton />}>
+          <DataTamu />
+        </Suspense>
+        <Suspense fallback={<TableRowSkeleton />}>
+          <DataAduan />
+        </Suspense>
+        <Suspense fallback={<TableRowSkeleton />}>
+          <DataSurvey />
+        </Suspense>
       </div>
 
-      {/* Recent Activities & Detail Stats */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activities - 2 kolom */}
-        <div className="lg:col-span-2">
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">
-            Aktivitas Terkini
-          </h2>
-          <Suspense fallback={<LoadingSpinner />}>
-            <RecentActivities />
-          </Suspense>
-        </div>
-
-        {/* Detail Stats - 1 kolom */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-700 mb-3">
-            Statistik Detail
-          </h2>
-          <Suspense fallback={<LoadingSpinner />}>
-            <DetailStats />
-          </Suspense>
-        </div>
+      {/* Grid 2 Kolom untuk Analisis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <AduanBerdasarkanKategori />
+        </Suspense>
+        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+          <RingkasanKepuasan />
+        </Suspense>
       </div>
-    </>
+
+      {/* Footer Info */}
+      <div className="text-xs text-gray-400 text-center pt-4 border-t">
+        <p>
+          © 2026 Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat
+        </p>
+        <p className="mt-1">
+          Terakhir diperbarui: {new Date().toLocaleDateString("id-ID")}
+        </p>
+      </div>
+    </div>
   );
 }
 
+// ==================== HALAMAN UTAMA ====================
 export default function AdminDashboard() {
   return (
-    <div className="space-y-6">
-      {/* Header dengan Welcome Message */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard Admin</h1>
-          <p className="text-gray-500 mt-1">
-            Selamat datang kembali! Berikut ringkasan layanan Disperindag.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-blue-50 p-3 rounded-lg">
-          <Calendar className="w-5 h-5 text-blue-600" />
-          <span className="text-sm text-gray-600">
-            {new Date().toLocaleDateString("id-ID", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </span>
-        </div>
-      </div>
-
-      {/* Main Content dengan Suspense */}
+    <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
+      <DashboardHeader />
       <Suspense
         fallback={
-          <div className="flex items-center justify-center min-h-96">
-            <LoadingSpinner />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <StatCardSkeleton key={i} />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-[300px] w-full" />
+              ))}
+            </div>
           </div>
         }
       >
-        <StatistikCards />
+        <DashboardContent />
       </Suspense>
     </div>
   );

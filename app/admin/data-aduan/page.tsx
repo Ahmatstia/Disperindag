@@ -1,3 +1,4 @@
+// app/admin/data-aduan/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -14,8 +15,13 @@ import {
   User,
   Clock,
   Download,
+  ChevronRight,
+  Search,
+  X,
+  BarChart3,
+  Users,
+  Building2,
 } from "lucide-react";
-import { LoadingTable } from "@/components/ui/loading-spinner";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +51,8 @@ import { getAduanDataOptimized, deleteData } from "@/lib/apps-script";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import debounce from "lodash/debounce";
+import Link from "next/link";
+import { Progress } from "@/components/ui/progress";
 
 interface AduanItem {
   Timestamp: string;
@@ -57,6 +65,8 @@ interface AduanItem {
   "Lokasi Peristiwa": string;
   "Tanggal Kejadian": string;
   "Tindak Lanjut": string;
+  Status?: string;
+  Kategori?: string;
 }
 
 export default function AduanPage() {
@@ -213,29 +223,58 @@ export default function AduanPage() {
     return name?.charAt(0).toUpperCase() || "?";
   };
 
+  const getStatistikKategori = () => {
+    const kategoriMap: Record<string, number> = {};
+    filteredData.forEach((item) => {
+      const kategori = item.Kategori || "Lainnya";
+      kategoriMap[kategori] = (kategoriMap[kategori] || 0) + 1;
+    });
+
+    return Object.entries(kategoriMap)
+      .map(([nama, jumlah]) => ({
+        nama,
+        jumlah,
+        persentase: Math.round((jumlah / (filteredData.length || 1)) * 100),
+      }))
+      .sort((a, b) => b.jumlah - a.jumlah)
+      .slice(0, 5);
+  };
+
   const getStatistik = () => {
-    return { total: filteredData.length };
+    const total = filteredData.length;
+    const diproses = filteredData.filter((d) => d.Status === "Diproses").length;
+    const selesai = filteredData.filter((d) => d.Status === "Selesai").length;
+    const baru = filteredData.filter(
+      (d) => !d.Status || d.Status === "Baru" || d.Status === "",
+    ).length;
+
+    return { total, diproses, selesai, baru };
   };
 
   const stat = getStatistik();
+  const statKategori = getStatistikKategori();
 
   const columns = [
     {
       key: "no",
       header: "No",
-      width: 60,
+      width: 50,
       render: (_: AduanItem, index: number) => index + 1,
     },
     {
       key: "timestamp",
       header: "Tanggal",
-      width: 100,
+      width: 90,
       sortable: true,
       render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-gray-400" />
-          <span className="text-sm">
-            {new Date(item.Timestamp).toLocaleDateString("id-ID")}
+          <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+          <span className="text-xs">
+            {new Date(item.Timestamp).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
           </span>
         </div>
       ),
@@ -243,74 +282,76 @@ export default function AduanPage() {
     {
       key: "nama",
       header: "Nama",
-      width: 150,
+      width: 120,
       sortable: true,
       render: (item: AduanItem) => (
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 bg-red-100 shrink-0">
-            <AvatarFallback className="text-red-600 font-semibold">
+          <Avatar className="w-6 h-6 bg-red-100 shrink-0">
+            <AvatarFallback className="text-red-600 text-xs">
               {getInitials(item.Nama)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium truncate">{item.Nama || "-"}</span>
+          <span className="text-xs truncate max-w-[80px]" title={item.Nama}>
+            {item.Nama || "-"}
+          </span>
         </div>
       ),
     },
     {
-      key: "pekerjaan",
-      header: "Pekerjaan",
-      width: 120,
-      sortable: true,
-      render: (item: AduanItem) => item.Pekerjaan || "-",
-    },
-    {
       key: "instansi",
       header: "Instansi",
-      width: 150,
+      width: 120,
       sortable: true,
-      render: (item: AduanItem) => item.Instansi || "-",
+      render: (item: AduanItem) => (
+        <div className="flex items-center gap-1">
+          <Building2 className="w-3 h-3 text-gray-400 shrink-0" />
+          <span className="text-xs truncate max-w-[90px]" title={item.Instansi}>
+            {item.Instansi || "-"}
+          </span>
+        </div>
+      ),
     },
     {
       key: "jk",
       header: "JK",
-      width: 50,
+      width: 40,
       render: (item: AduanItem) => (
         <Badge
           variant="outline"
-          className={
+          className={`text-[10px] px-1 py-0 ${
             item["Jenis Kelamin"] === "Laki-laki"
               ? "bg-blue-50 text-blue-700 border-blue-200"
               : "bg-pink-50 text-pink-700 border-pink-200"
-          }
+          }`}
         >
           {item["Jenis Kelamin"] === "Laki-laki" ? "L" : "P"}
         </Badge>
       ),
     },
     {
-      key: "usia",
-      header: "Usia",
-      width: 80,
-      render: (item: AduanItem) => item["Rentang Usia"] || "-",
-    },
-    {
       key: "peristiwa",
       header: "Peristiwa",
-      width: 200,
+      width: 150,
       render: (item: AduanItem) => (
-        <div className="truncate" title={item["Hal Peristiwa"]}>
-          {item["Hal Peristiwa"]?.substring(0, 30)}...
+        <div
+          className="text-xs truncate max-w-[130px]"
+          title={item["Hal Peristiwa"]}
+        >
+          {item["Hal Peristiwa"]?.substring(0, 25)}...
         </div>
       ),
     },
     {
       key: "lokasi",
       header: "Lokasi",
-      width: 120,
+      width: 100,
       render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
           <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
-          <span className="text-sm truncate">
+          <span
+            className="text-xs truncate max-w-[70px]"
+            title={item["Lokasi Peristiwa"]}
+          >
             {item["Lokasi Peristiwa"] || "-"}
           </span>
         </div>
@@ -319,18 +360,35 @@ export default function AduanPage() {
     {
       key: "tglKejadian",
       header: "Tgl Kejadian",
-      width: 100,
+      width: 90,
       render: (item: AduanItem) => (
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3 text-gray-400 shrink-0" />
-          <span className="text-sm">{item["Tanggal Kejadian"] || "-"}</span>
+          <span className="text-xs">{item["Tanggal Kejadian"] || "-"}</span>
         </div>
       ),
     },
     {
+      key: "status",
+      header: "Status",
+      width: 80,
+      render: (item: AduanItem) => {
+        const status = item.Status || "Baru";
+        const color =
+          status === "Selesai"
+            ? "bg-green-100 text-green-800"
+            : status === "Diproses"
+              ? "bg-blue-100 text-blue-800"
+              : "bg-yellow-100 text-yellow-800";
+        return (
+          <Badge className={`${color} text-[10px] px-1 py-0`}>{status}</Badge>
+        );
+      },
+    },
+    {
       key: "detail",
-      header: "Detail",
-      width: 60,
+      header: "",
+      width: 40,
       render: (item: AduanItem) => (
         <Dialog
           open={dialogOpen && selectedAduan === item}
@@ -347,9 +405,9 @@ export default function AduanPage() {
                 e.stopPropagation();
                 setSelectedAduan(item);
               }}
-              className="hover:bg-red-100"
+              className="hover:bg-red-100 h-6 w-6 p-0"
             >
-              <Eye className="h-4 w-4 text-red-600" />
+              <Eye className="h-3 w-3 text-red-600" />
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
@@ -413,7 +471,7 @@ export default function AduanPage() {
                       <p className="text-sm text-gray-500 mb-1">
                         Hal/Peristiwa
                       </p>
-                      <div className="bg-white p-3 rounded border">
+                      <div className="bg-white p-3 rounded border text-sm">
                         {selectedAduan["Hal Peristiwa"]}
                       </div>
                     </div>
@@ -424,7 +482,9 @@ export default function AduanPage() {
                         </p>
                         <div className="bg-white p-2 rounded border flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <span>{selectedAduan["Lokasi Peristiwa"]}</span>
+                          <span className="text-sm">
+                            {selectedAduan["Lokasi Peristiwa"]}
+                          </span>
                         </div>
                       </div>
                       <div>
@@ -433,7 +493,9 @@ export default function AduanPage() {
                         </p>
                         <div className="bg-white p-2 rounded border flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          <span>{selectedAduan["Tanggal Kejadian"]}</span>
+                          <span className="text-sm">
+                            {selectedAduan["Tanggal Kejadian"]}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -441,10 +503,26 @@ export default function AduanPage() {
                       <p className="text-sm text-gray-500 mb-1">
                         Tindak Lanjut yang Diharapkan
                       </p>
-                      <div className="bg-white p-3 rounded border">
+                      <div className="bg-white p-3 rounded border text-sm">
                         {selectedAduan["Tindak Lanjut"]}
                       </div>
                     </div>
+                    {selectedAduan.Status && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Status</p>
+                        <Badge
+                          className={
+                            selectedAduan.Status === "Selesai"
+                              ? "bg-green-100 text-green-800"
+                              : selectedAduan.Status === "Diproses"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }
+                        >
+                          {selectedAduan.Status}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -455,8 +533,8 @@ export default function AduanPage() {
     },
     {
       key: "aksi",
-      header: "Aksi",
-      width: 60,
+      header: "",
+      width: 40,
       render: (item: AduanItem, index: number) => (
         <Button
           variant="ghost"
@@ -469,118 +547,237 @@ export default function AduanPage() {
             });
             setDeleteDialogOpen(true);
           }}
-          className="hover:bg-red-100"
+          className="hover:bg-red-100 h-6 w-6 p-0"
         >
-          <Trash2 className="h-4 w-4 text-red-600" />
+          <Trash2 className="h-3 w-3 text-red-600" />
         </Button>
       ),
     },
   ];
 
-  if (initialLoading) return <LoadingTable />;
-
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-red-600 to-red-800 p-6 text-white shadow-xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-40 w-40 rounded-full bg-white/10 blur-2xl"></div>
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link
+          href="/admin/dashboard"
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Dashboard
+        </Link>
+        <ChevronRight className="w-4 h-4 text-gray-400" />
+        <span className="font-medium text-gray-700">Data Aduan</span>
+      </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Header */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 className="text-2xl font-bold text-gray-800">
               Data Layanan Aduan
             </h1>
-            <p className="text-red-100 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500" />
               Total {total} aduan telah masuk
             </p>
           </div>
           <div className="flex gap-2">
             <Button
               onClick={refresh}
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              variant="outline"
+              className="gap-2 border-gray-200 hover:bg-red-50 hover:text-red-600"
             >
               <RefreshCw className="h-4 w-4" /> Refresh
             </Button>
             <Button
-              variant="secondary"
-              className="bg-white/20 text-white hover:bg-white/30 border-0 gap-2"
+              variant="outline"
+              className="gap-2 border-gray-200 hover:bg-red-50 hover:text-red-600"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <Filter className="h-4 w-4" /> Filter
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Statistik */}
-      <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 gap-4">
-        <Card className="border-0 shadow-lg bg-linear-to-br from-red-50 to-white">
-          <CardContent className="p-6">
+      {/* Statistik Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Aduan</p>
-                <p className="text-3xl font-bold text-red-600 mt-1">
+                <p className="text-xs font-medium text-gray-500">Total Aduan</p>
+                <p className="text-xl font-bold text-red-600 mt-1">
                   {stat.total}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">dari {total} total</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-xl">
-                <AlertCircle className="w-6 h-6 text-red-600" />
+              <div className="p-2 bg-red-50 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Aduan Baru</p>
+                <p className="text-xl font-bold text-yellow-600 mt-1">
+                  {stat.baru}
+                </p>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {Math.round((stat.baru / (stat.total || 1)) * 100)}%
+                </p>
+              </div>
+              <div className="p-2 bg-yellow-50 rounded-lg">
+                <Clock className="w-4 h-4 text-yellow-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Diproses</p>
+                <p className="text-xl font-bold text-blue-600 mt-1">
+                  {stat.diproses}
+                </p>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {Math.round((stat.diproses / (stat.total || 1)) * 100)}%
+                </p>
+              </div>
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <User className="w-4 h-4 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Selesai</p>
+                <p className="text-xl font-bold text-green-600 mt-1">
+                  {stat.selesai}
+                </p>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {Math.round((stat.selesai / (stat.total || 1)) * 100)}%
+                </p>
+              </div>
+              <div className="p-2 bg-green-50 rounded-lg">
+                <Users className="w-4 h-4 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filter */}
-      {showFilters && (
-        <Card className="border-0 shadow-lg animate-in slide-in-from-top duration-300">
-          <CardContent className="p-6">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4">
-                <Input
-                  placeholder="Cari nama/instansi/aduan..."
-                  className="w-75"
-                  onChange={(e) => debouncedSearch(e.target.value)}
-                />
-                <DatePicker
-                  date={selectedDate}
-                  setDate={setSelectedDate}
-                  placeholder="Filter berdasarkan tanggal"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={exportToExcel}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Excel
-                </Button>
-              </div>
+      {/* Kategori Aduan */}
+      {statKategori.length > 0 && (
+        <Card className="border border-gray-200">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-purple-600" />
+              Distribusi Kategori Aduan
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {statKategori.map((item, index) => (
+                <div key={index}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span
+                      className="text-gray-600 truncate max-w-[80px]"
+                      title={item.nama}
+                    >
+                      {item.nama}
+                    </span>
+                    <span className="font-medium">{item.persentase}%</span>
+                  </div>
+                  <Progress value={item.persentase} className="h-1.5" />
+                  <p className="text-xs text-gray-400 mt-1">
+                    {item.jumlah} aduan
+                  </p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Filter Panel */}
+      {showFilters && (
+        <Card className="border border-gray-200 animate-in slide-in-from-top duration-300">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-4 items-center justify-between">
+              <div className="flex flex-wrap gap-4 flex-1">
+                <div className="relative flex-1 min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Cari nama/instansi/aduan..."
+                    className="pl-9 border-gray-200 h-9 text-sm"
+                    onChange={(e) => debouncedSearch(e.target.value)}
+                  />
+                </div>
+                <DatePicker
+                  date={selectedDate}
+                  setDate={setSelectedDate}
+                  placeholder="Filter tanggal"
+                />
+                {selectedDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedDate(null)}
+                    className="text-red-600 hover:bg-red-50 h-9 px-2"
+                  >
+                    <X className="h-4 w-4 mr-1" /> Reset
+                  </Button>
+                )}
+              </div>
+              <Button
+                onClick={exportToExcel}
+                className="bg-green-600 hover:bg-green-700 text-white gap-2 h-9"
+              >
+                <Download className="h-4 w-4" />
+                Export Excel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Info Total Data */}
+      <div className="text-sm text-gray-500">
+        Menampilkan {filteredData.length} dari {total} data
+      </div>
+
       {/* Virtual Table */}
-      <VirtualTable
-        data={filteredData as Record<string, unknown>[]}
-        columns={columns as any}
-        onRowClick={(item) => setSelectedAduan(item as AduanItem)}
-        initialLoading={initialLoading}
-        loading={loading}
-        hasMore={hasMore}
-        loadMore={loadMore}
-        total={total}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSort={handleSort}
-        className="border-0 shadow-lg"
-        rowClassName="hover:bg-red-50/50 transition-colors"
-        emptyMessage="Tidak ada data"
-        rowHeight={60}
-      />
+      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+        <VirtualTable
+          data={filteredData}
+          columns={columns}
+          onRowClick={(item) => {
+            setSelectedAduan(item);
+            setDialogOpen(true);
+          }}
+          initialLoading={initialLoading}
+          loading={loading}
+          hasMore={hasMore}
+          loadMore={loadMore}
+          total={total}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={handleSort}
+          className="border-0"
+          rowClassName="hover:bg-red-50/50 transition-colors cursor-pointer"
+          emptyMessage="Tidak ada data aduan"
+          rowHeight={48}
+        />
+      </div>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
