@@ -753,7 +753,11 @@ export default function SurveyPage() {
                   className="w-[300px]"
                   onChange={(e) => debouncedSearch(e.target.value)}
                 />
-                <DatePicker date={selectedDate} setDate={setSelectedDate} />
+                <DatePicker
+                  date={selectedDate}
+                  setDate={setSelectedDate}
+                  placeholder="Filter berdasarkan tanggal"
+                />
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={exportToExcel}>

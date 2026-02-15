@@ -546,7 +546,11 @@ export default function AduanPage() {
                   className="w-75"
                   onChange={(e) => debouncedSearch(e.target.value)}
                 />
-                <DatePicker value={selectedDate} onChange={setSelectedDate} />
+                <DatePicker
+                  date={selectedDate}
+                  setDate={setSelectedDate}
+                  placeholder="Filter berdasarkan tanggal"
+                />
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={exportToExcel}>

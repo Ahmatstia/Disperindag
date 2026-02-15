@@ -460,14 +460,6 @@ export default function Home() {
                 className="bg-amber-400 hover:bg-amber-500 text-gray-900 text-lg px-8 py-6 rounded-2xl shadow-lg shadow-amber-400/30"
               >
                 Lihat Layanan
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 text-lg px-8 py-6 rounded-2xl"
-              >
-                Hubungi Kami
               </Button>
             </motion.div>
           </div>
