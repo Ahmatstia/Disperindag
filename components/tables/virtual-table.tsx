@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,6 @@ export function VirtualTable<T extends Record<string, unknown>>({
   initialLoading,
   hasMore,
   loadMore,
-  total,
   sortBy,
   sortOrder,
   onSort,
@@ -51,11 +50,11 @@ export function VirtualTable<T extends Record<string, unknown>>({
 }: VirtualTableProps<T>) {
   // console.log("🎨 [Table] Render with data length:", data?.length);
 
-  const handleSort = (key: string) => {
+  function handleSort(key: string) {
     if (onSort && columns.find((col) => col.key === key)?.sortable) {
       onSort(key);
     }
-  };
+  }
 
   const renderSortIcon = (key: string) => {
     if (sortBy === key) {

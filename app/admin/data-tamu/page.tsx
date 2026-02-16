@@ -28,7 +28,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -57,7 +56,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 interface TamuItem {
-  [key: string]: any; // Add index signature to allow access by string key
+  [key: string]: string; // Add index signature to allow access by string key
   Timestamp: string;
   Nama: string;
   "Jenis Kelamin": string;
