@@ -1,7 +1,5 @@
 // app/page.tsx
 "use client";
-
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,7 +16,6 @@ import {
   Clock,
   Users,
   TrendingUp,
-  ChevronRight,
   Building2,
   Target,
   Facebook,
@@ -37,9 +34,20 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { LayoutGrid } from "@/components/ui/layout-grid";
 import { LampContainer } from "@/components/ui/lamp";
+import { FAQSection } from "@/components/FAQSection";
+import { Button } from "@/components/ui/button";
 
 // Data Services
 const services = [
+  {
+    title: "Buku Tamu Digital",
+    description: "Isi daftar hadir kunjungan Anda",
+    detail:
+      "Tinggalkan jejak kunjungan Anda di kantor kami. Ini membantu kami mencatat dan meningkatkan kualitas pelayanan.",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSc5-NHq3-rzJQ6tgufRjtpbwhayOLpHJNvxIRMLHkbALgINQQ/viewform?usp=publish-editor",
+    cta: "Isi Buku Tamu",
+    color: "teal",
+  },
   {
     title: "Survey Kepuasan",
     description: "Bantu kami meningkatkan kualitas pelayanan",
@@ -48,7 +56,6 @@ const services = [
     href: "https://docs.google.com/forms/d/e/1FAIpQLSfN54kIxcdIRQj6-FSg2DxkFl_3bFhaJIJb505a31qB3SIPWg/viewform?usp=dialog",
     cta: "Isi Survey",
     color: "blue",
-    stats: "250+ Survey Terisi",
   },
   {
     title: "Layanan Aduan",
@@ -58,154 +65,6 @@ const services = [
     href: "https://docs.google.com/forms/d/e/1FAIpQLSerslTr9GDsfkfF4W8CTSdiT-8L8_Aq5zFsCUATYpmEX7TT0Q/viewform?usp=dialog",
     cta: "Buat Aduan",
     color: "red",
-    stats: "50 Aduan Ditindaklanjuti",
-  },
-  {
-    title: "Buku Tamu Digital",
-    description: "Isi daftar hadir kunjungan Anda",
-    detail:
-      "Tinggalkan jejak kunjungan Anda di kantor kami. Ini membantu kami mencatat dan meningkatkan kualitas pelayanan.",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSc5-NHq3-rzJQ6tgufRjtpbwhayOLpHJNvxIRMLHkbALgINQQ/viewform?usp=publish-editor",
-    cta: "Isi Buku Tamu",
-    color: "teal",
-    stats: "500+ Pengunjung",
-  },
-];
-
-// gallery
-const galleryCards = [
-  {
-    id: 1,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">Pelayanan Publik</h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Suasana pelayanan publik di kantor DISPERINDAG yang ramah dan
-          profesional.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Kegiatan</span>
-          <span className="text-white/60">12 Feb 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-2",
-    thumbnail: "/kota.png",
-  },
-  {
-    id: 2,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">
-          Kunjungan Lapangan
-        </h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Tim DISPERINDAG melakukan kunjungan ke sentra industri kecil.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Kegiatan</span>
-          <span className="text-white/60">10 Feb 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-1",
-    thumbnail: "/kota.png",
-  },
-  {
-    id: 3,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">
-          Sosialisasi Perizinan
-        </h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Sosialisasi sistem perizinan online OSS kepada pelaku UMKM.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Event</span>
-          <span className="text-white/60">5 Feb 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-1",
-    thumbnail: "/kota.png",
-  },
-  {
-    id: 4,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">Rapat Koordinasi</h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Rapat koordinasi tahunan dengan seluruh stakeholder.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Rapat</span>
-          <span className="text-white/60">1 Feb 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-2",
-    thumbnail: "/kota.png",
-  },
-  {
-    id: 5,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">
-          Pameran Produk Unggulan
-        </h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Pameran produk unggulan UMKM Sumatera Barat.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Event</span>
-          <span className="text-white/60">28 Jan 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-1",
-    thumbnail: "/kota.png",
-  },
-  {
-    id: 6,
-    content: (
-      <div className="text-white">
-        <h4 className="text-xl md:text-2xl font-bold mb-2">Tim DISPERINDAG</h4>
-        <p className="text-sm md:text-base text-white/80 mb-3">
-          Foto bersama tim DISPERINDAG setelah pelatihan.
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="px-3 py-1 bg-white/20 rounded-full">Profil</span>
-          <span className="text-white/60">20 Jan 2026</span>
-        </div>
-      </div>
-    ),
-    className: "md:col-span-1",
-    thumbnail: "/kota.png",
-  },
-];
-
-// Data FAQ
-const faqs = [
-  {
-    question: "Bagaimana cara mengisi survey kepuasan?",
-    answer:
-      "Anda dapat mengisi survey dengan mengklik tombol 'Isi Survey' pada kartu layanan. Survey hanya membutuhkan waktu 2-3 menit.",
-  },
-  {
-    question: "Apakah aduan saya dirahasiakan?",
-    answer:
-      "Ya, identitas pelapor akan kami rahasiakan sesuai dengan UU Pelayanan Publik. Namun, untuk tindak lanjut, kami mungkin memerlukan kontak yang bisa dihubungi.",
-  },
-  {
-    question: "Berapa lama aduan diproses?",
-    answer:
-      "Setiap aduan akan kami proses maksimal 3x24 jam. Untuk aduan yang memerlukan koordinasi lebih lanjut, akan kami informasikan perkembangannya.",
-  },
-  {
-    question: "Apakah buku tamu bisa diisi dari rumah?",
-    answer:
-      "Buku tamu digital ditujukan untuk pengunjung yang datang ke kantor. Namun, Anda tetap bisa mengisi sebagai bentuk partisipasi.",
   },
 ];
 
@@ -324,6 +183,45 @@ const MobileMenu = ({
     </AnimatePresence>
   );
 };
+
+// Data untuk Stacked Testimonials
+const testimonials = [
+  {
+    quote:
+      "Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat berkomitmen untuk mewujudkan industri yang tangguh, berdaya saing, dan berkelanjutan melalui pelayanan prima dan inovasi digital.",
+    name: "Dr. Hendra Saputra, M.Si",
+    designation: "Kepala Dinas Perindustrian dan Perdagangan",
+    src: "/kota.png",
+  },
+  {
+    quote:
+      "Kami terus berupaya meningkatkan efisiensi perdagangan dalam dan luar negeri serta melindungi konsumen melalui kebijakan yang berpihak pada masyarakat.",
+    name: "Ir. Maya Sari, MT",
+    designation: "Sekretaris Dinas",
+    src: "/kota.png",
+  },
+  {
+    quote:
+      "Pengembangan UMKM menjadi fokus utama kami dengan memberikan pendampingan teknis, akses permodalan, dan peluang pasar yang lebih luas untuk produk lokal.",
+    name: "Doni Permana, SE",
+    designation: "Kepala Bidang Perindustrian",
+    src: "/kota.png",
+  },
+  {
+    quote:
+      "Kami memfasilitasi perdagangan yang adil dan transparan serta mendorong produk lokal Sumatera Barat go international.",
+    name: "Rina Wulandari, SH",
+    designation: "Kepala Bidang Perdagangan",
+    src: "/kota.png",
+  },
+  {
+    quote:
+      "Transformasi digital pelayanan publik kami wujudkan melalui sistem perizinan online, survey kepuasan, dan layanan aduan yang responsif.",
+    name: "Tim Digitalisasi Pelayanan",
+    designation: "Divisi Pelayanan dan Informasi",
+    src: "/kota.png",
+  },
+];
 
 // ============= STACKED TESTIMONIALS COMPONENT =============
 interface Testimonial {
@@ -516,47 +414,8 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Data untuk Stacked Testimonials
-  const testimonials = [
-    {
-      quote:
-        "Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat berkomitmen untuk mewujudkan industri yang tangguh, berdaya saing, dan berkelanjutan melalui pelayanan prima dan inovasi digital.",
-      name: "Dr. Hendra Saputra, M.Si",
-      designation: "Kepala Dinas Perindustrian dan Perdagangan",
-      src: "/kota.png",
-    },
-    {
-      quote:
-        "Kami terus berupaya meningkatkan efisiensi perdagangan dalam dan luar negeri serta melindungi konsumen melalui kebijakan yang berpihak pada masyarakat.",
-      name: "Ir. Maya Sari, MT",
-      designation: "Sekretaris Dinas",
-      src: "/kota.png",
-    },
-    {
-      quote:
-        "Pengembangan UMKM menjadi fokus utama kami dengan memberikan pendampingan teknis, akses permodalan, dan peluang pasar yang lebih luas untuk produk lokal.",
-      name: "Doni Permana, SE",
-      designation: "Kepala Bidang Perindustrian",
-      src: "/kota.png",
-    },
-    {
-      quote:
-        "Kami memfasilitasi perdagangan yang adil dan transparan serta mendorong produk lokal Sumatera Barat go international.",
-      name: "Rina Wulandari, SH",
-      designation: "Kepala Bidang Perdagangan",
-      src: "/kota.png",
-    },
-    {
-      quote:
-        "Transformasi digital pelayanan publik kami wujudkan melalui sistem perizinan online, survey kepuasan, dan layanan aduan yang responsif.",
-      name: "Tim Digitalisasi Pelayanan",
-      designation: "Divisi Pelayanan dan Informasi",
-      src: "/kota.png",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Floating Navbar */}
       <motion.header
         initial={{ y: -100 }}
@@ -576,7 +435,7 @@ export default function Home() {
                 whileTap={{ scale: 0.95 }}
               >
                 <Image
-                  src="/logo.png"
+                  src="/logo3.png"
                   alt="Logo DISPERINDAG"
                   width={scrolled ? 45 : 50}
                   height={scrolled ? 45 : 50}
@@ -598,27 +457,22 @@ export default function Home() {
             </div>
 
             <nav className="hidden md:flex items-center gap-8">
-              {[
-                "Beranda",
-                "Profil",
-                "Layanan",
-                "Berita",
-                "Galeri",
-                "Kontak",
-              ].map((item) => (
-                <motion.a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  whileHover={{ y: -2 }}
-                  className={`font-medium transition-colors ${
-                    scrolled
-                      ? "text-gray-700 hover:text-blue-600"
-                      : "text-white/90 hover:text-white"
-                  }`}
-                >
-                  {item}
-                </motion.a>
-              ))}
+              {["Beranda", "Profil", "Layanan", "Galeri", "Kontak"].map(
+                (item) => (
+                  <motion.a
+                    key={item}
+                    href={`#${item.toLowerCase()}`}
+                    whileHover={{ y: -2 }}
+                    className={`font-medium transition-colors ${
+                      scrolled
+                        ? "text-gray-700 hover:text-blue-600"
+                        : "text-white/90 hover:text-white"
+                    }`}
+                  >
+                    {item}
+                  </motion.a>
+                ),
+              )}
             </nav>
 
             <button
@@ -729,7 +583,7 @@ export default function Home() {
         </svg>
       </section>
 
-      {/* Layanan dengan Lamp Effect - VERSI PERBAIKAN */}
+      {/* Layanan */}
       <section id="layanan" className="relative  overflow-hidden">
         {/* Background gelap untuk lamp effect */}
         <div className="absolute inset-0" />
@@ -810,13 +664,6 @@ export default function Home() {
                       className={`h-2 w-full bg-gradient-to-r from-${service.color}-500 to-${service.color}-400`}
                     />
                     <CardHeader>
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                        className={`w-16 h-16 rounded-2xl ${color.light} flex items-center justify-center mb-4`}
-                      >
-                        <IconComponent className={`w-8 h-8 ${color.text}`} />
-                      </motion.div>
                       <CardTitle className="text-2xl text-gray-900">
                         {service.title}
                       </CardTitle>
@@ -828,10 +675,6 @@ export default function Home() {
                       <p className="text-gray-600 leading-relaxed">
                         {service.detail}
                       </p>
-                      <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                        <Users className="w-4 h-4" />
-                        <span>{service.stats}</span>
-                      </div>
                     </CardContent>
                     <CardFooter>
                       <a
@@ -886,7 +729,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Profil Dinas dengan Stacked Testimonials */}
+      {/* Profil Dinas*/}
       <section id="profil" className="py-10 bg-white">
         <div className="container mx-auto px-4">
           <motion.div
@@ -913,125 +756,11 @@ export default function Home() {
               onIndexChange={setActiveTestimonialIndex}
             />
           </div>
-
-          <motion.div
-            key={activeTestimonialIndex}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mt-8 "
-          >
-            <h4 className="text-2xl font-bold text-gray-900">
-              {testimonials[activeTestimonialIndex].name}
-            </h4>
-            <p className="text-blue-600 font-medium">
-              {testimonials[activeTestimonialIndex].designation}
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Galeri */}
-      <section id="galeri" className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-amber-50" />
-        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent" />
-
-        <div className="container mx-auto px-4 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="text-sm font-bold uppercase tracking-widest text-blue-600 mb-2 block">
-              GALERI KEGIATAN
-            </span>
-            <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-              Dokumentasi Kegiatan
-            </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Momen dan kegiatan terbaru di lingkungan DISPERINDAG. Klik pada
-              gambar untuk melihat detail lebih lanjut.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="min-h-[600px] md:min-h-[800px] w-full"
-          >
-            <LayoutGrid cards={galleryCards} />
-          </motion.div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <span className="text-sm font-bold uppercase tracking-widest text-blue-600 mb-2 block">
-                FAQ
-              </span>
-              <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-                Pertanyaan Umum
-              </h3>
-              <p className="text-gray-600">
-                Temukan jawaban atas pertanyaan yang sering diajukan
-              </p>
-            </motion.div>
-
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-xl shadow-sm overflow-hidden"
-                >
-                  <button
-                    onClick={() =>
-                      setActiveFaq(activeFaq === index ? null : index)
-                    }
-                    className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <span className="font-semibold text-gray-900">
-                      {faq.question}
-                    </span>
-                    <ChevronRight
-                      className={`w-5 h-5 text-gray-500 transition-transform ${
-                        activeFaq === index ? "rotate-90" : ""
-                      }`}
-                    />
-                  </button>
-                  <AnimatePresence>
-                    {activeFaq === index && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="px-6 pb-4"
-                      >
-                        <p className="text-gray-600">{faq.answer}</p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <FAQSection />
 
       {/* Lokasi & Kontak */}
       <section id="kontak" className="py-20 bg-white">
@@ -1154,7 +883,7 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <Image
-                  src="/logo.png"
+                  src="/logo3.png"
                   alt="Logo DISPERINDAG"
                   width={50}
                   height={50}
