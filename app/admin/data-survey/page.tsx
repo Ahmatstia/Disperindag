@@ -75,6 +75,7 @@ interface SurveyItem {
   Kerapian: string;
   "Keberadaan Pengaduan": string;
   "Tata Cara Pengaduan": string;
+  "Tata Cara Pengaduan (2)": string; // Tambahkan ini
   "Pengaduan Online": string;
   Keberlanjutan: string;
   "Sarana Kelengkapan": string;
@@ -540,8 +541,12 @@ export default function SurveyPage() {
                         value: selectedSurvey["Keberadaan Pengaduan"],
                       },
                       {
-                        label: "Tata Cara",
+                        label: "Tata Cara Pengaduan",
                         value: selectedSurvey["Tata Cara Pengaduan"],
+                      },
+                      {
+                        label: "Tata Cara Pengaduan (2)", // ✅ Sekarang 5 item
+                        value: selectedSurvey["Tata Cara Pengaduan (2)"],
                       },
                       {
                         label: "Pengaduan Online",

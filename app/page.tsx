@@ -32,19 +32,18 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { LayoutGrid } from "@/components/ui/layout-grid";
 import { LampContainer } from "@/components/ui/lamp";
 import { FAQSection } from "@/components/FAQSection";
 import { Button } from "@/components/ui/button";
 
-// Data Services
+// Data Services dengan LINK ASLI DARI DINAS
 const services = [
   {
     title: "Buku Tamu Digital",
     description: "Isi daftar hadir kunjungan Anda",
     detail:
       "Tinggalkan jejak kunjungan Anda di kantor kami. Ini membantu kami mencatat dan meningkatkan kualitas pelayanan.",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSc5-NHq3-rzJQ6tgufRjtpbwhayOLpHJNvxIRMLHkbALgINQQ/viewform?usp=publish-editor",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSfB4cGs_j2MTDAA9FFFERyXX0cNrWY2T678xdMxGh2t8Z8XBg/viewform?usp=preview",
     cta: "Isi Buku Tamu",
     color: "teal",
   },
@@ -53,7 +52,7 @@ const services = [
     description: "Bantu kami meningkatkan kualitas pelayanan",
     detail:
       "Isi survey singkat tentang pengalaman Anda menggunakan layanan kami. Setiap masukan berarti untuk kemajuan bersama.",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSfN54kIxcdIRQj6-FSg2DxkFl_3bFhaJIJb505a31qB3SIPWg/viewform?usp=dialog",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSccRtaHeM4Wzqe9G-u8yrllRiWQLb93F8uZxSG2U2QerITcOQ/viewform?usp=dialog",
     cta: "Isi Survey",
     color: "blue",
   },
@@ -62,13 +61,13 @@ const services = [
     description: "Sampaikan keluhan dan aspirasi Anda",
     detail:
       "Laporkan masalah atau berikan saran untuk perbaikan layanan. Setiap aduan akan kami tindaklanjuti maksimal 3x24 jam.",
-    href: "https://docs.google.com/forms/d/e/1FAIpQLSerslTr9GDsfkfF4W8CTSdiT-8L8_Aq5zFsCUATYpmEX7TT0Q/viewform?usp=dialog",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSdVWAC0gTPT-mQUbXe5o9Hba_yPX7W_N5_uEwHo1MKbZp_b5w/viewform?usp=dialog",
     cta: "Buat Aduan",
     color: "red",
   },
 ];
 
-// Data Layanan Tambahan
+// Data Layanan Tambahan (tetap sama)
 const additionalServices = [
   {
     icon: Building2,
@@ -92,7 +91,7 @@ const additionalServices = [
   },
 ];
 
-// Animasi Variants
+// Animasi Variants (tetap sama)
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -110,7 +109,7 @@ const itemVariants = {
   },
 };
 
-// Component Mobile Menu
+// Component Mobile Menu (tetap sama)
 const MobileMenu = ({
   isOpen,
   onClose,
@@ -184,7 +183,7 @@ const MobileMenu = ({
   );
 };
 
-// Data untuk Stacked Testimonials
+// Data untuk Stacked Testimonials (tetap sama)
 const testimonials = [
   {
     quote:
@@ -397,9 +396,7 @@ function StackedTestimonials({
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -446,7 +443,7 @@ export default function Home() {
                 <h1
                   className={`font-bold transition-all duration-300 ${scrolled ? "text-xl text-gray-900" : "text-2xl text-white"}`}
                 >
-                  DISPERINDAG
+                  PORTAL LAYANAN DISPERINDAG
                 </h1>
                 <p
                   className={`text-sm transition-all duration-300 ${scrolled ? "text-gray-500" : "text-white/70"}`}
@@ -584,12 +581,11 @@ export default function Home() {
       </section>
 
       {/* Layanan */}
-      <section id="layanan" className="relative  overflow-hidden">
+      <section id="layanan" className="relative overflow-hidden">
         {/* Background gelap untuk lamp effect */}
         <div className="absolute inset-0" />
 
         <LampContainer className="!pt-40">
-          {/* Header dengan efek lamp - spacing diperbaiki */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -610,11 +606,8 @@ export default function Home() {
               Pilih layanan yang sesuai dan sampaikan kebutuhan Anda.
             </p>
           </motion.div>
-
-          {/* Service Cards - pindah ke luar LampContainer atau atur ulang posisi */}
         </LampContainer>
 
-        {/* Cards ditempatkan di luar LampContainer biar ga ketimpa */}
         <div className="container mx-auto px-4 relative z-20 -mt-40">
           <motion.div
             variants={containerVariants}
@@ -649,7 +642,6 @@ export default function Home() {
               };
               const color = colors[service.color as keyof typeof colors];
 
-              // Pilih icon berdasarkan title
               const IconComponent =
                 service.title === "Survey Kepuasan"
                   ? ClipboardList
@@ -697,7 +689,6 @@ export default function Home() {
             })}
           </motion.div>
 
-          {/* Additional Services */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -753,7 +744,7 @@ export default function Home() {
 
             <StackedTestimonials
               testimonials={testimonials}
-              onIndexChange={setActiveTestimonialIndex}
+              onIndexChange={() => {}}
             />
           </div>
         </div>
@@ -786,7 +777,9 @@ export default function Home() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">Alamat</h4>
                     <p className="text-gray-600">
-                      Jl. Sudirman No. 1, Padang - Sumatera Barat 25111
+                      Jl. Aur No.1,Padang Pasir,Kec. Padang Bar., Kota
+                      Padang,Sumatera Barat,Indonesia,Kecamatan Padang
+                      Barat,Sumatera Barat, Indonesia
                     </p>
                   </div>
                 </div>
@@ -799,7 +792,7 @@ export default function Home() {
                     <h4 className="font-semibold text-gray-900 mb-1">
                       Telepon
                     </h4>
-                    <p className="text-gray-600">(0751) 123-456</p>
+                    <p className="text-gray-600">+6282171019451</p>
                   </div>
                 </div>
 
@@ -810,7 +803,7 @@ export default function Home() {
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
                     <p className="text-gray-600">
-                      info@disperindag.sumbar.go.id
+                      disperindang@sumbarprov.go.id
                     </p>
                   </div>
                 </div>

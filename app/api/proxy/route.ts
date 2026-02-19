@@ -1,35 +1,76 @@
 // app/api/proxy/route.ts
 import { NextResponse } from "next/server";
 
-const APPS_SCRIPT_URL = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL!;
+// 3 URL dari .env
+const APPS_SCRIPT_URL_SURVEY = process.env.NEXT_PUBLIC_APPS_SCRIPT_SURVEY;
+const APPS_SCRIPT_URL_ADUAN = process.env.NEXT_PUBLIC_APPS_SCRIPT_ADUAN;
+const APPS_SCRIPT_URL_TAMU = process.env.NEXT_PUBLIC_APPS_SCRIPT_TAMU;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     console.log("📡 [GET] Proxy dipanggil");
+
+    // Ambil parameter type dari URL
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type") || "survey";
+
+    // Pilih URL berdasarkan type
+    let APPS_SCRIPT_URL;
+    switch (type) {
+      case "aduan":
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_ADUAN;
+        break;
+      case "tamu":
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_TAMU;
+        break;
+      default:
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_SURVEY;
+    }
+
+    // Validasi URL
+    if (!APPS_SCRIPT_URL) {
+      console.error(`❌ URL untuk ${type} tidak ditemukan di .env`);
+      return NextResponse.json(
+        { error: `URL for ${type} not configured` },
+        { status: 500 },
+      );
+    }
+
+    console.log(
+      `📡 Fetching ke ${type}:`,
+      APPS_SCRIPT_URL.substring(0, 50) + "...",
+    );
 
     const response = await fetch(APPS_SCRIPT_URL, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });
 
-    const text = await response.text();
-    // console.log("📥 [GET] Response:", text.substring(0, 200));
+    if (!response.ok) {
+      console.error(`❌ Response error: ${response.status}`);
+      return NextResponse.json(
+        { error: `HTTP ${response.status}` },
+        { status: response.status },
+      );
+    }
 
-    // 1. Coba parse sebagai JSON langsung (siapa tahu format berubah jadi JSON)
+    const text = await response.text();
+    console.log(`📡 Response length: ${text.length}`);
+
+    // Coba parse sebagai JSON langsung
     try {
       const jsonData = JSON.parse(text);
       return NextResponse.json(jsonData);
     } catch (e) {
-      // Ignore error, lanjut cek JSONP
+      // Bukan JSON, lanjut cek JSONP
     }
 
-    // 2. Coba parse sebagai JSONP (callback({...}))
-    // Regex diperbaiki untuk handle multiline ([\s\S]*)
+    // Parse sebagai JSONP (callback({...}))
     const jsonMatch = text.match(/callback\(([\s\S]*)\)/);
     if (!jsonMatch) {
       console.error("❌ Invalid response format:", text.substring(0, 100));
       return NextResponse.json(
-        { error: "Invalid response format", raw: text.substring(0, 100) },
+        { error: "Invalid response format" },
         { status: 500 },
       );
     }
@@ -38,7 +79,10 @@ export async function GET() {
     return NextResponse.json(data);
   } catch (error) {
     console.error("❌ [GET] Proxy error:", error);
-    return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -49,7 +93,27 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log("📤 [POST] Request body:", body);
 
-    // Tambahkan callback parameter ke URL
+    // Tentukan URL berdasarkan sheetName
+    let APPS_SCRIPT_URL;
+    switch (body.sheetName) {
+      case "aduan":
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_ADUAN;
+        break;
+      case "tamu":
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_TAMU;
+        break;
+      default:
+        APPS_SCRIPT_URL = APPS_SCRIPT_URL_SURVEY;
+    }
+
+    if (!APPS_SCRIPT_URL) {
+      return NextResponse.json(
+        { error: `URL for ${body.sheetName} not configured` },
+        { status: 500 },
+      );
+    }
+
+    // Tambahkan callback parameter
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.set("callback", "callback");
 
@@ -60,44 +124,26 @@ export async function POST(request: Request) {
     });
 
     const text = await response.text();
-    console.log("📥 [POST] Response text:", text);
 
-    // Cek apakah response kosong
     if (!text || text.trim() === "") {
-      console.error("❌ Response kosong dari Apps Script");
-      return NextResponse.json(
-        {
-          error: "Empty response from Apps Script",
-        },
-        { status: 500 },
-      );
+      console.error("❌ Response kosong");
+      return NextResponse.json({ error: "Empty response" }, { status: 500 });
     }
 
-    // Parse JSONP response
+    // Parse JSONP
     const jsonMatch = text.match(/^([a-zA-Z0-9_]+)\((.*)\)$/);
     if (!jsonMatch) {
-      console.error("❌ Bukan format JSONP. Response:", text);
+      console.error("❌ Bukan format JSONP:", text.substring(0, 100));
       return NextResponse.json(
-        {
-          error: "Invalid response format",
-          raw: text.substring(0, 200),
-        },
+        { error: "Invalid response format" },
         { status: 500 },
       );
     }
 
     const data = JSON.parse(jsonMatch[2]);
-    console.log("✅ [POST] Parsed data:", data);
-
     return NextResponse.json(data);
   } catch (error) {
     console.error("❌ [POST] Proxy error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to post",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to post" }, { status: 500 });
   }
 }

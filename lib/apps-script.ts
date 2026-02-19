@@ -1,6 +1,13 @@
 // lib/apps-script.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// ============================================
+// KONFIGURASI URL PER LAYANAN
+// ============================================
+const APPS_SCRIPT_URL_SURVEY = process.env.NEXT_PUBLIC_APPS_SCRIPT_SURVEY;
+const APPS_SCRIPT_URL_ADUAN = process.env.NEXT_PUBLIC_APPS_SCRIPT_ADUAN;
+const APPS_SCRIPT_URL_TAMU = process.env.NEXT_PUBLIC_APPS_SCRIPT_TAMU;
+
 // Cache untuk menyimpan data mentah
 let dataCache: {
   survey: any[];
@@ -17,13 +24,12 @@ const isServer = typeof window === "undefined";
 // ============================================
 // FUNGSI FETCH UNTUK SERVER
 // ============================================
-async function fetchFromServer() {
+async function fetchFromServer(type = "survey") {
   try {
-    console.log("🖥️ [SERVER] Fetching data...");
+    console.log(`🖥️ [SERVER] Fetching ${type} data...`);
 
-    // Di server, kita perlu base URL dari environment atau relative
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const url = `${baseUrl}/api/proxy`;
+    const url = `${baseUrl}/api/proxy?type=${type}`;
 
     const response = await fetch(url, {
       cache: "no-store",
@@ -36,7 +42,7 @@ async function fetchFromServer() {
 
     return await response.json();
   } catch (error) {
-    console.error("❌ [SERVER] Error fetching:", error);
+    console.error(`❌ [SERVER] Error fetching ${type}:`, error);
     throw error;
   }
 }
@@ -44,11 +50,11 @@ async function fetchFromServer() {
 // ============================================
 // FUNGSI FETCH UNTUK CLIENT
 // ============================================
-async function fetchFromClient() {
+async function fetchFromClient(type = "survey") {
   try {
-    console.log("🌐 [CLIENT] Fetching data...");
+    console.log(`🌐 [CLIENT] Fetching ${type} data...`);
 
-    const response = await fetch("/api/proxy", {
+    const response = await fetch(`/api/proxy?type=${type}`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });
@@ -59,7 +65,7 @@ async function fetchFromClient() {
 
     return await response.json();
   } catch (error) {
-    console.error("❌ [CLIENT] Error fetching:", error);
+    console.error(`❌ [CLIENT] Error fetching ${type}:`, error);
     throw error;
   }
 }
@@ -67,30 +73,15 @@ async function fetchFromClient() {
 // ============================================
 // FUNGSI FETCH DENGAN AUTO-DETECT
 // ============================================
-async function fetchFromProxy(forceRefresh = false) {
+async function fetchFromProxy(type = "survey", forceRefresh = false) {
   try {
-    if (
-      !forceRefresh &&
-      dataCache &&
-      Date.now() - dataCache.timestamp < CACHE_DURATION
-    ) {
-      console.log("📦 Menggunakan data dari cache");
-      return dataCache;
-    }
+    const data = isServer
+      ? await fetchFromServer(type)
+      : await fetchFromClient(type);
 
-    // Pilih method berdasarkan environment
-    const data = isServer ? await fetchFromServer() : await fetchFromClient();
-
-    dataCache = {
-      survey: data.survey || [],
-      aduan: data.aduan || [],
-      tamu: data.tamu || [],
-      timestamp: Date.now(),
-    };
-
-    return dataCache;
+    return data;
   } catch (error) {
-    console.error("❌ Error fetching:", error);
+    console.error(`❌ Error fetching ${type}:`, error);
     throw error;
   }
 }
@@ -99,7 +90,6 @@ async function fetchFromProxy(forceRefresh = false) {
 // FUNGSI DELETE UNTUK CLIENT
 // ============================================
 export async function deleteData(sheetName: string, rowIndex: number) {
-  // Delete hanya bisa di client
   if (isServer) {
     throw new Error("Delete hanya bisa dilakukan di client");
   }
@@ -129,7 +119,7 @@ export async function deleteData(sheetName: string, rowIndex: number) {
 }
 
 // ============================================
-// FORMAT DATA SURVEY (OPTIMIZED)
+// FORMAT DATA SURVEY (OPTIMIZED) - FIELD SUDAH COCOK
 // ============================================
 export async function getSurveyDataOptimized(
   page = 1,
@@ -137,46 +127,57 @@ export async function getSurveyDataOptimized(
   forceRefresh = false,
 ) {
   try {
-    const data = await fetchFromProxy(forceRefresh);
-    if (!data || !data.survey)
-      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    console.log(`🔍 [SurveyPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    const formatted = data.survey.map((item: any) => ({
-      Timestamp: item["Timestamp"] || "",
-      Nama: item["Nama"] || "",
-      Pekerjaan: item["Pekerjaan "]?.trim() || item["Pekerjaan"] || "",
-      "Jenis Kelamin": item["Jenis Kelamin"] || "",
-      "Rentang Usia": item["Rentang Usia :"] || "",
-      Layanan: item["Layanan yang didapatkan"] || "",
-      Persyaratan:
-        item["Persyaratan Layanan "]?.trim() ||
-        item["Persyaratan Layanan"] ||
-        "",
-      Prosedur: item["Prosedur Pelayanan"] || "",
-      "Waktu Proses Berkas": item["Waktu Proses Berkas"] || "",
-      "Waktu Selesai Aduan": item["Waktu Selesai Aduan"] || "",
-      "Waktu Aduan Online": item["Waktu Aduan Online"] || "",
-      "Waktu Respon Online": item["Waktu Respon Online"] || "",
-      Biaya: item["Biaya/Tarif"] || "",
-      Kesesuaian: item["Kesesuaian Hasil"] || "",
-      Penguasaan: item["Penguasaan Petugas"] || "",
-      Komunikasi: item["Komunikasi Petugas"] || "",
-      "Komunikasi Online": item["Komunikasi Online"] || "",
-      Sikap: item["Sikap Petugas"] || "",
-      Kerapian: item["Kerapian Petugas"] || "",
-      "Keberadaan Pengaduan": item["Keberadaan Pengaduan"] || "",
-      "Tata Cara Pengaduan": item["Tata Cara Pengaduan"] || "",
-      "Pengaduan Online": item["Pengaduan Online"] || "",
-      Keberlanjutan: item["Keberlanjutan Pengaduan"] || "",
-      "Sarana Kelengkapan": item["Sarana Penunjang Kelengkapan"] || "",
-      "Sarana Kelayakan": item["Sarana Penunjang Kelayakan"] || "",
-      "Sarana Toilet": item["Sarana Toilet"] || "",
-      Kebersihan: item["Kebersihan Sarana"] || "",
-      "Front Officer": item["Front Officer"] || "",
-      "Ketersediaan Informasi": item["Ketersediaan Informasi"] || "",
-      "Kemanfaatan Online": item["Kemanfaatan Online"] || "",
-      Kepuasan: item["Kepuasan Layanan"] || "",
-    }));
+    const data = await fetchFromProxy("survey", forceRefresh);
+
+    if (!data || !data.survey) {
+      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
+
+    const surveyArray = data.survey;
+
+    if (surveyArray.length === 0) {
+      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
+
+    // Format data - field sudah sesuai dengan spreadsheet
+    const formatted = surveyArray.map((item: any) => {
+      return {
+        Timestamp: item["Timestamp"] || "",
+        Nama: item["Nama"] || "",
+        Pekerjaan: item["Pekerjaan"] || "",
+        "Jenis Kelamin": item["Jenis Kelamin"] || "",
+        "Rentang Usia": item["Rentang Usia"] || "",
+        Layanan: item["Layanan"] || "",
+        Persyaratan: item["Persyaratan"] || "",
+        Prosedur: item["Prosedur"] || "",
+        "Waktu Proses Berkas": item["Waktu Proses Berkas"] || "",
+        "Waktu Selesai Aduan": item["Waktu Selesai Aduan"] || "",
+        "Waktu Aduan Online": item["Waktu Aduan Online"] || "",
+        "Waktu Respon Online": item["Waktu Respon Online"] || "",
+        Biaya: item["Biaya"] || "",
+        Kesesuaian: item["Kesesuaian"] || "",
+        Penguasaan: item["Penguasaan"] || "",
+        Komunikasi: item["Komunikasi"] || "",
+        "Komunikasi Online": item["Komunikasi Online"] || "",
+        Sikap: item["Sikap"] || "",
+        Kerapian: item["Kerapian"] || "",
+        "Keberadaan Pengaduan": item["Keberadaan Pengaduan"] || "",
+        "Tata Cara Pengaduan": item["Tata Cara Pengaduan"] || "",
+        "Tata Cara Pengaduan (2)": item["Tata Cara Pengaduan (2)"] || "",
+        "Pengaduan Online": item["Pengaduan Online"] || "",
+        Keberlanjutan: item["Keberlanjutan"] || "",
+        "Sarana Kelengkapan": item["Sarana Kelengkapan"] || "",
+        "Sarana Kelayakan": item["Sarana Kelayakan"] || "",
+        "Sarana Toilet": item["Sarana Toilet"] || "",
+        Kebersihan: item["Kebersihan"] || "",
+        "Front Officer": item["Front Officer"] || "",
+        "Ketersediaan Informasi": item["Ketersediaan Informasi"] || "",
+        "Kemanfaatan Online": item["Kemanfaatan Online"] || "",
+        Kepuasan: item["Kepuasan"] || "",
+      };
+    });
 
     const total = formatted.length;
     const start = (page - 1) * limit;
@@ -199,7 +200,7 @@ export async function getSurveyDataOptimized(
 }
 
 // ============================================
-// FORMAT DATA ADUAN (OPTIMIZED)
+// FORMAT DATA ADUAN (OPTIMIZED) - SESUAI RESPONSE ASLI
 // ============================================
 export async function getAduanDataOptimized(
   page = 1,
@@ -207,28 +208,65 @@ export async function getAduanDataOptimized(
   forceRefresh = false,
 ) {
   try {
-    const data = await fetchFromProxy(forceRefresh);
-    if (!data || !data.aduan)
-      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    console.log(`🔍 [AduanPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    const formatted = data.aduan.map((item: any) => ({
-      Timestamp: item["Timestamp"] || "",
-      Nama: item["Nama"] || "",
-      Pekerjaan: item["Pekerjaan"] || "",
-      Instansi: item["Instansi/Perusahaan"] || "",
-      "Jenis Kelamin": item["Jenis Kelamin"] || "",
-      "Rentang Usia": item["Rentang Usia"] || "",
-      "Hal Peristiwa": item["Hal/Peristiwa"] || "",
-      "Lokasi Peristiwa": item["Lokasi Peristiwa"] || "",
-      "Tanggal Kejadian": item["Tanggal Kejadian"] || "",
-      "Tindak Lanjut": item["Tindak Lanjut yang Diharapkan"] || "",
-    }));
+    const data = await fetchFromProxy("aduan", forceRefresh);
+
+    console.log(`🔍 [AduanPage Debug] Raw data from proxy:`, data);
+
+    if (!data || !data.aduan) {
+      console.log(`🔍 [AduanPage Debug] data.aduan is null/undefined`);
+      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
+
+    const aduanArray = data.aduan;
+    console.log(`🔍 [AduanPage Debug] aduanArray length:`, aduanArray.length);
+
+    if (aduanArray.length === 0) {
+      console.log(`🔍 [AduanPage Debug] aduanArray is empty`);
+      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
+
+    // Log sample data pertama untuk melihat struktur
+    console.log(`🔍 [AduanPage Debug] Sample item:`, aduanArray[0]);
+
+    // Format data sesuai struktur response asli
+    const formatted = aduanArray.map((item: any, index: number) => {
+      return {
+        Timestamp: item["Timestamp"] || "",
+        Nama: item["Nama"] || "",
+        Pekerjaan: item["Pekerjaan"] || "",
+        Instansi: item["Instansi/Perusahaan"] || "",
+        "Jenis Kelamin": item["Jenis Kelamin"] || "",
+        "Rentang Usia": item["Rentang Usia"] || "",
+        // Perhatikan: pakai "Hal/Peristiwa" dengan slash, bukan spasi
+        "Hal Peristiwa": item["Hal/Peristiwa"] || "",
+        "Lokasi Peristiwa": item["Lokasi Peristiwa"] || "",
+        "Tanggal Kejadian": item["Tanggal Kejadian"] || "",
+        // Perhatikan: nama field panjang
+        "Tindak Lanjut": item["Tindak Lanjut yang Diharapkan"] || "",
+        Status: item["Status"] || "Baru",
+      };
+    });
+
+    console.log(
+      `🔍 [AduanPage Debug] Formatted data length:`,
+      formatted.length,
+    );
+    console.log(`🔍 [AduanPage Debug] Formatted sample:`, formatted[0]);
 
     const total = formatted.length;
     const start = (page - 1) * limit;
     const end = page * limit;
     const paginatedData = formatted.slice(start, end);
     const totalPages = Math.ceil(total / limit);
+
+    console.log(`🔍 [AduanPage Debug] Returning:`, {
+      dataLength: paginatedData.length,
+      total,
+      page,
+      totalPages,
+    });
 
     return {
       data: paginatedData,
@@ -245,7 +283,7 @@ export async function getAduanDataOptimized(
 }
 
 // ============================================
-// FORMAT DATA TAMU (OPTIMIZED)
+// FORMAT DATA TAMU (OPTIMIZED) - SESUAI RESPONSE ASLI
 // ============================================
 export async function getTamuDataOptimized(
   page = 1,
@@ -253,32 +291,58 @@ export async function getTamuDataOptimized(
   forceRefresh = false,
 ) {
   try {
-    const data = await fetchFromProxy(forceRefresh);
+    console.log(`🔍 [TamuPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    if (!data || !data.tamu)
+    const data = await fetchFromProxy("tamu", forceRefresh);
+
+    console.log(`🔍 [TamuPage Debug] Raw data from proxy:`, data);
+
+    if (!data || !data.tamu) {
+      console.log(`🔍 [TamuPage Debug] data.tamu is null/undefined`);
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
 
-    const formatted = data.tamu.map((item: any) => ({
-      Timestamp: item["Timestamp"] || "",
-      Nama: item["Nama"] || "",
-      "Jenis Kelamin":
-        item["Jenis Kelamin:"]?.trim() || item["Jenis Kelamin"] || "",
-      "Rentang Usia":
-        item["Rentang Usia:"]?.trim() || item["Rentang Usia"] || "",
-      "No HP": item["Nomor Handphone"] || "",
-      Instansi: item["Instansi/Perusahaan"] || "",
-      Jabatan: item["Jabatan"] || "",
-      Alamat: item["Alamat Instansi/Perusahaan"] || "",
-      "Bidang Dituju":
-        item["Bidang yang Dituju:"]?.trim() || item["Bidang yang Dituju"] || "",
-      Tujuan: item["Tujuan"] || "",
-    }));
+    const tamuArray = data.tamu;
+    console.log(`🔍 [TamuPage Debug] tamuArray length:`, tamuArray.length);
+
+    if (tamuArray.length === 0) {
+      console.log(`🔍 [TamuPage Debug] tamuArray is empty`);
+      return { data: [], total: 0, page, totalPages: 0, hasMore: false };
+    }
+
+    // Format data sesuai struktur response asli
+    const formatted = tamuArray.map((item: any, index: number) => {
+      console.log(`🔍 [TamuPage Debug] Item ${index}:`, item);
+
+      return {
+        Timestamp: item["Timestamp"] || "",
+        Nama: item["Nama"] || "",
+        "Jenis Kelamin": item["Jenis Kelamin"] || "",
+        "Rentang Usia": item["Rentang Usia"] || "",
+        // Column 4 diabaikan karena kosong
+        "No HP": item["Nomor Handphone"] || "",
+        Instansi: item["Instansi/Perusahaan"] || "",
+        Jabatan: item["Jabatan"] || "",
+        Alamat: item["Alamat Instansi/Perusahaan"] || "",
+        "Bidang Dituju": item["Bidang yang Dituju"] || "",
+        Tujuan: item["Tujuan"] || "",
+      };
+    });
+
+    console.log(`🔍 [TamuPage Debug] Formatted data sample:`, formatted[0]);
 
     const total = formatted.length;
     const start = (page - 1) * limit;
     const end = page * limit;
     const paginatedData = formatted.slice(start, end);
     const totalPages = Math.ceil(total / limit);
+
+    console.log(`🔍 [TamuPage Debug] Returning:`, {
+      dataLength: paginatedData.length,
+      total,
+      page,
+      totalPages,
+    });
 
     return {
       data: paginatedData,
@@ -295,32 +359,25 @@ export async function getTamuDataOptimized(
 }
 
 // ============================================
-// FUNGSI UNTUK REFRESH CACHE
-// ============================================
-export function clearCache() {
-  dataCache = null;
-}
-
-// ============================================
 // FUNGSI BACKWARD COMPATIBILITY
 // ============================================
 export async function getSurveyData() {
-  const data = await fetchFromProxy();
+  const data = await fetchFromProxy("survey");
   return data?.survey || [];
 }
 
 export async function getAduanData() {
-  const data = await fetchFromProxy();
+  const data = await fetchFromProxy("aduan");
   return data?.aduan || [];
 }
 
 export async function getTamuData() {
-  const data = await fetchFromProxy();
+  const data = await fetchFromProxy("tamu");
   return data?.tamu || [];
 }
 
 export async function getSurveyDataPaginated(page = 1, limit = 50) {
-  const result = await getSurveyDataOptimized(page, limit);
+  const result = await getSurveyDataOptimized(page, limit, true);
   return {
     data: result.data,
     total: result.total,
@@ -331,7 +388,7 @@ export async function getSurveyDataPaginated(page = 1, limit = 50) {
 }
 
 export async function getAduanDataPaginated(page = 1, limit = 50) {
-  const result = await getAduanDataOptimized(page, limit);
+  const result = await getAduanDataOptimized(page, limit, true);
   return {
     data: result.data,
     total: result.total,
@@ -342,7 +399,7 @@ export async function getAduanDataPaginated(page = 1, limit = 50) {
 }
 
 export async function getTamuDataPaginated(page = 1, limit = 50) {
-  const result = await getTamuDataOptimized(page, limit);
+  const result = await getTamuDataOptimized(page, limit, true);
   return {
     data: result.data,
     total: result.total,
@@ -353,46 +410,28 @@ export async function getTamuDataPaginated(page = 1, limit = 50) {
 }
 
 // ============================================
+// FUNGSI CLEAR CACHE
+// ============================================
+export function clearCache() {
+  dataCache = null;
+}
+
+// ============================================
 // STATISTIK
 // ============================================
 export async function getStatistik() {
   try {
-    const data = await fetchFromProxy();
-
-    let totalNilai = 0;
-    let jumlahData = 0;
-
-    data.survey.forEach((item: any) => {
-      const kepuasan = item["Kepuasan Layanan"] || "";
-      if (
-        kepuasan.includes("Sangat Puas") ||
-        kepuasan.includes("Sangat Baik")
-      ) {
-        totalNilai += 5;
-        jumlahData++;
-      } else if (kepuasan.includes("Puas") || kepuasan.includes("Baik")) {
-        totalNilai += 4;
-        jumlahData++;
-      } else if (kepuasan.includes("Cukup")) {
-        totalNilai += 3;
-        jumlahData++;
-      } else if (kepuasan.includes("Kurang")) {
-        totalNilai += 2;
-        jumlahData++;
-      } else if (kepuasan.includes("Tidak")) {
-        totalNilai += 1;
-        jumlahData++;
-      }
-    });
-
-    const rataKepuasan =
-      jumlahData > 0 ? (totalNilai / jumlahData).toFixed(1) : "0.0";
+    const [survey, aduan, tamu] = await Promise.all([
+      fetchFromProxy("survey"),
+      fetchFromProxy("aduan"),
+      fetchFromProxy("tamu"),
+    ]);
 
     return {
-      totalSurvey: data.survey.length,
-      totalAduan: data.aduan.length,
-      totalTamu: data.tamu.length,
-      rataKepuasan,
+      totalSurvey: survey?.survey?.length || 0,
+      totalAduan: aduan?.aduan?.length || 0,
+      totalTamu: tamu?.tamu?.length || 0,
+      rataKepuasan: "0.0", // Sementara
     };
   } catch (error) {
     console.error("❌ Error getStatistik:", error);

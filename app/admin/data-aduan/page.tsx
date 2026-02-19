@@ -66,7 +66,6 @@ interface AduanItem {
   "Tanggal Kejadian": string;
   "Tindak Lanjut": string;
   Status?: string;
-  Kategori?: string;
 }
 
 export default function AduanPage() {
@@ -223,36 +222,19 @@ export default function AduanPage() {
     return name?.charAt(0).toUpperCase() || "?";
   };
 
-  const getStatistikKategori = () => {
-    const kategoriMap: Record<string, number> = {};
-    filteredData.forEach((item) => {
-      const kategori = item.Kategori || "Lainnya";
-      kategoriMap[kategori] = (kategoriMap[kategori] || 0) + 1;
-    });
-
-    return Object.entries(kategoriMap)
-      .map(([nama, jumlah]) => ({
-        nama,
-        jumlah,
-        persentase: Math.round((jumlah / (filteredData.length || 1)) * 100),
-      }))
-      .sort((a, b) => b.jumlah - a.jumlah)
-      .slice(0, 5);
-  };
-
+  // Statistik berdasarkan status (dengan fallback jika Status tidak ada)
   const getStatistik = () => {
     const total = filteredData.length;
-    const diproses = filteredData.filter((d) => d.Status === "Diproses").length;
-    const selesai = filteredData.filter((d) => d.Status === "Selesai").length;
     const baru = filteredData.filter(
       (d) => !d.Status || d.Status === "Baru" || d.Status === "",
     ).length;
+    const diproses = filteredData.filter((d) => d.Status === "Diproses").length;
+    const selesai = filteredData.filter((d) => d.Status === "Selesai").length;
 
-    return { total, diproses, selesai, baru };
+    return { total, baru, diproses, selesai };
   };
 
   const stat = getStatistik();
-  const statKategori = getStatistikKategori();
 
   const columns = [
     {
@@ -367,23 +349,6 @@ export default function AduanPage() {
           <span className="text-xs">{item["Tanggal Kejadian"] || "-"}</span>
         </div>
       ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      width: 80,
-      render: (item: AduanItem) => {
-        const status = item.Status || "Baru";
-        const color =
-          status === "Selesai"
-            ? "bg-green-100 text-green-800"
-            : status === "Diproses"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-yellow-100 text-yellow-800";
-        return (
-          <Badge className={`${color} text-[10px] px-1 py-0`}>{status}</Badge>
-        );
-      },
     },
     {
       key: "detail",
@@ -507,22 +472,6 @@ export default function AduanPage() {
                         {selectedAduan["Tindak Lanjut"]}
                       </div>
                     </div>
-                    {selectedAduan.Status && (
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">Status</p>
-                        <Badge
-                          className={
-                            selectedAduan.Status === "Selesai"
-                              ? "bg-green-100 text-green-800"
-                              : selectedAduan.Status === "Diproses"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-yellow-100 text-yellow-800"
-                          }
-                        >
-                          {selectedAduan.Status}
-                        </Badge>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -676,37 +625,6 @@ export default function AduanPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Kategori Aduan */}
-      {statKategori.length > 0 && (
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-purple-600" />
-              Distribusi Kategori Aduan
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {statKategori.map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span
-                      className="text-gray-600 truncate max-w-[80px]"
-                      title={item.nama}
-                    >
-                      {item.nama}
-                    </span>
-                    <span className="font-medium">{item.persentase}%</span>
-                  </div>
-                  <Progress value={item.persentase} className="h-1.5" />
-                  <p className="text-xs text-gray-400 mt-1">
-                    {item.jumlah} aduan
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Filter Panel */}
       {showFilters && (
