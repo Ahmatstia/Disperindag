@@ -1,1013 +1,697 @@
-// app/page.tsx
 "use client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  ArrowRight,
-  MapPin,
-  Phone,
-  Mail,
-  Clock,
-  Users,
-  TrendingUp,
-  Building2,
-  Target,
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Linkedin,
-  Menu,
-  X,
-  ClipboardList,
-  Megaphone,
-  BookOpen,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { useState, useEffect } from "react";
-import { LampContainer } from "@/components/ui/lamp";
-import { FAQSection } from "@/components/FAQSection";
-import { Button } from "@/components/ui/button";
 
-// Data Services dengan LINK ASLI DARI DINAS
+import {
+  ArrowRight, MapPin, Phone, Mail, Users, TrendingUp,
+  Building2, Target, Facebook, Twitter, Instagram,
+  Youtube, Linkedin, X, BookOpen,
+  CheckCircle, MessageSquare, ChevronUp, ChevronDown,
+} from "lucide-react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import Image from "next/image";
+import { useState, useEffect, useRef } from "react";
+
+// ─── TOKENS ──────────────────────────────────────────────────
+const C = {
+  navy:      "#081529",
+  navyMid:   "#0d2144",
+  gold:      "#c9973a",
+  goldLight: "#e8b85c",
+  cream:     "#faf6ef",
+  slate:     "#64748b",
+  slateLight:"#94a3b8",
+  border:    "rgba(201,151,58,0.2)",
+  borderSub: "rgba(255,255,255,0.07)",
+};
+
+// ─── DATA ────────────────────────────────────────────────────
 const services = [
   {
+    icon: BookOpen,
     title: "Buku Tamu Digital",
-    description: "Isi daftar hadir kunjungan Anda",
-    detail:
-      "Tinggalkan jejak kunjungan Anda di kantor kami. Ini membantu kami mencatat dan meningkatkan kualitas pelayanan.",
+    description: "Isi daftar hadir kunjungan Anda ke kantor DISPERINDAG untuk meningkatkan kualitas pelayanan kami.",
     href: "https://docs.google.com/forms/d/e/1FAIpQLSfB4cGs_j2MTDAA9FFFERyXX0cNrWY2T678xdMxGh2t8Z8XBg/viewform?usp=preview",
     cta: "Isi Buku Tamu",
-    color: "teal",
+    accent: "#059669",
+    accentBg: "#f0fdf4",
+    tag: "Kunjungan",
   },
   {
+    icon: CheckCircle,
     title: "Survey Kepuasan",
-    description: "Bantu kami meningkatkan kualitas pelayanan",
-    detail:
-      "Isi survey singkat tentang pengalaman Anda menggunakan layanan kami. Setiap masukan berarti untuk kemajuan bersama.",
+    description: "Bantu kami meningkatkan kualitas layanan. Setiap masukan Anda sangat berarti untuk kemajuan bersama.",
     href: "https://docs.google.com/forms/d/e/1FAIpQLSccRtaHeM4Wzqe9G-u8yrllRiWQLb93F8uZxSG2U2QerITcOQ/viewform?usp=dialog",
     cta: "Isi Survey",
-    color: "blue",
+    accent: "#2563eb",
+    accentBg: "#eff6ff",
+    tag: "Evaluasi",
   },
   {
+    icon: MessageSquare,
     title: "Layanan Aduan",
-    description: "Sampaikan keluhan dan aspirasi Anda",
-    detail:
-      "Laporkan masalah atau berikan saran untuk perbaikan layanan. Setiap aduan akan kami tindaklanjuti maksimal 3x24 jam.",
+    description: "Sampaikan keluhan dan aspirasi Anda. Setiap aduan ditindaklanjuti maksimal 3×24 jam kerja.",
     href: "https://docs.google.com/forms/d/e/1FAIpQLSdVWAC0gTPT-mQUbXe5o9Hba_yPX7W_N5_uEwHo1MKbZp_b5w/viewform?usp=dialog",
     cta: "Buat Aduan",
-    color: "red",
+    accent: "#dc2626",
+    accentBg: "#fff1f2",
+    tag: "Pengaduan",
   },
 ];
 
-// Data Layanan Tambahan (tetap sama)
 const additionalServices = [
-  {
-    icon: Building2,
-    title: "Izin Usaha",
-    description: "Informasi dan panduan perizinan usaha industri",
-  },
-  {
-    icon: TrendingUp,
-    title: "Informasi Pasar",
-    description: "Update harga komoditas dan pasar terkini",
-  },
-  {
-    icon: Users,
-    title: "Pendampingan UMKM",
-    description: "Bimbingan teknis untuk pelaku UMKM",
-  },
-  {
-    icon: Target,
-    title: "Program Unggulan",
-    description: "Program pengembangan industri dan perdagangan",
-  },
+  { icon: Building2,  title: "Izin Usaha",         desc: "Panduan perizinan usaha industri" },
+  { icon: TrendingUp, title: "Informasi Pasar",    desc: "Update harga komoditas terkini" },
+  { icon: Users,      title: "Pendampingan UMKM",  desc: "Bimbingan teknis pelaku UMKM" },
+  { icon: Target,     title: "Program Unggulan",   desc: "Pengembangan industri & perdagangan" },
 ];
 
-// Animasi Variants (tetap sama)
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 },
-  },
-};
-
-// Component Mobile Menu (tetap sama)
-const MobileMenu = ({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) => {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-50 p-6"
-          >
-            <button onClick={onClose} className="absolute right-4 top-4">
-              <X className="w-6 h-6" />
-            </button>
-            <div className="mt-12 space-y-4">
-              <a
-                href="#home"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Beranda
-              </a>
-              <a
-                href="#profil"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Profil
-              </a>
-              <a
-                href="#layanan"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Layanan
-              </a>
-              <a
-                href="#berita"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Berita
-              </a>
-              <a
-                href="#galeri"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Galeri
-              </a>
-              <a
-                href="#kontak"
-                className="block py-2 text-lg font-medium hover:text-blue-600"
-              >
-                Kontak
-              </a>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
-
-// Data untuk Stacked Testimonials (tetap sama)
-const testimonials = [
-  {
-    quote:
-      "Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat berkomitmen untuk mewujudkan industri yang tangguh, berdaya saing, dan berkelanjutan melalui pelayanan prima dan inovasi digital.",
-    name: "Dr. Hendra Saputra, M.Si",
-    designation: "Kepala Dinas Perindustrian dan Perdagangan",
-    src: "/kota.png",
-  },
-  {
-    quote:
-      "Kami terus berupaya meningkatkan efisiensi perdagangan dalam dan luar negeri serta melindungi konsumen melalui kebijakan yang berpihak pada masyarakat.",
-    name: "Ir. Maya Sari, MT",
-    designation: "Sekretaris Dinas",
-    src: "/kota.png",
-  },
-  {
-    quote:
-      "Pengembangan UMKM menjadi fokus utama kami dengan memberikan pendampingan teknis, akses permodalan, dan peluang pasar yang lebih luas untuk produk lokal.",
-    name: "Doni Permana, SE",
-    designation: "Kepala Bidang Perindustrian",
-    src: "/kota.png",
-  },
-  {
-    quote:
-      "Kami memfasilitasi perdagangan yang adil dan transparan serta mendorong produk lokal Sumatera Barat go international.",
-    name: "Rina Wulandari, SH",
-    designation: "Kepala Bidang Perdagangan",
-    src: "/kota.png",
-  },
-  {
-    quote:
-      "Transformasi digital pelayanan publik kami wujudkan melalui sistem perizinan online, survey kepuasan, dan layanan aduan yang responsif.",
-    name: "Tim Digitalisasi Pelayanan",
-    designation: "Divisi Pelayanan dan Informasi",
-    src: "/kota.png",
-  },
+const faqs = [
+  { q: "Bagaimana cara mengakses layanan DISPERINDAG secara online?",   a: "Anda dapat mengakses layanan melalui portal ini. Tersedia layanan buku tamu digital, survey kepuasan, dan pengaduan masyarakat yang dapat diakses kapan saja melalui tautan di halaman Layanan." },
+  { q: "Berapa lama waktu penyelesaian pengaduan masyarakat?",          a: "Setiap pengaduan yang masuk akan ditindaklanjuti maksimal 3×24 jam kerja. Anda akan mendapatkan konfirmasi penerimaan dan informasi perkembangan penanganan melalui email yang Anda daftarkan." },
+  { q: "Apa saja syarat untuk mendapatkan pendampingan UMKM?",          a: "Pendampingan UMKM terbuka untuk pelaku usaha di Provinsi Sumatera Barat. Persyaratan: memiliki NIK, usaha terdaftar atau dalam proses pendaftaran, dan mengikuti sesi orientasi yang dijadwalkan." },
+  { q: "Bagaimana cara mendapatkan informasi harga komoditas terkini?", a: "Informasi harga komoditas diperbarui berkala melalui kanal informasi resmi DISPERINDAG. Hubungi kantor kami langsung atau ikuti akun media sosial resmi kami." },
+  { q: "Jam operasional kantor DISPERINDAG Sumatera Barat?",            a: "Kantor kami melayani Senin–Jumat pukul 08.00–16.00 WIB. Layanan online portal tersedia 24 jam setiap hari." },
 ];
 
-// ============= STACKED TESTIMONIALS COMPONENT =============
-interface Testimonial {
-  quote: string;
-  name: string;
-  designation: string;
-  src: string;
-}
-
-interface StackedTestimonialsProps {
-  testimonials: Testimonial[];
-  onIndexChange?: (index: number) => void;
-}
-
-function StackedTestimonials({
-  testimonials,
-  onIndexChange,
-}: StackedTestimonialsProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [exitX, setExitX] = useState(0);
-  const [x, setX] = useState(0);
-
-  const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x > 100) {
-      setExitX(200);
-      setTimeout(() => {
-        setCurrentIndex(
-          (prev) => (prev - 1 + testimonials.length) % testimonials.length,
-        );
-        setExitX(0);
-        setX(0);
-        onIndexChange?.(
-          (currentIndex - 1 + testimonials.length) % testimonials.length,
-        );
-      }, 300);
-    } else if (info.offset.x < -100) {
-      setExitX(-200);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-        setExitX(0);
-        setX(0);
-        onIndexChange?.((currentIndex + 1) % testimonials.length);
-      }, 300);
-    }
-  };
-
+// ─── ANIMATED WAVES ──────────────────────────────────────────
+function HeroWaves() {
   return (
-    <div className="relative w-full max-w-4xl mx-auto min-h-[600px] flex items-center justify-center">
-      <div className="relative w-[280px] h-[380px] md:w-[400px] md:h-[500px]">
-        {testimonials.map((testimonial, index) => {
-          const isCurrent = index === currentIndex;
-          const isNext = index === (currentIndex + 1) % testimonials.length;
-          const isPrev =
-            index ===
-            (currentIndex - 1 + testimonials.length) % testimonials.length;
-          const isThird =
-            index === (currentIndex + 2) % testimonials.length ||
-            index ===
-              (currentIndex - 2 + testimonials.length) % testimonials.length;
+    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, pointerEvents: "none", lineHeight: 0 }}>
+      <motion.svg viewBox="0 0 1440 170" preserveAspectRatio="none"
+        style={{ width: "200%", position: "absolute", bottom: 36, left: "-50%" }}
+        animate={{ x: ["0%", "25%", "0%"] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path d="M0,85 C200,155 400,15 600,85 C800,155 1000,15 1200,85 C1320,120 1380,95 1440,85 L1440,170 L0,170 Z" fill="rgba(201,151,58,0.07)" />
+      </motion.svg>
 
-          let xPosition = 0;
-          let yPosition = 0;
-          let rotation = 0;
-          let scale = 1;
-          let zIndex = 0;
+      <motion.svg viewBox="0 0 1440 130" preserveAspectRatio="none"
+        style={{ width: "200%", position: "absolute", bottom: 20, left: "-25%" }}
+        animate={{ x: ["0%", "-20%", "0%"] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path d="M0,65 C240,120 480,10 720,65 C960,120 1200,10 1440,65 L1440,130 L0,130 Z" fill="rgba(201,151,58,0.05)" />
+      </motion.svg>
 
-          if (isCurrent) {
-            xPosition = exitX;
-            yPosition = 0;
-            rotation = 0;
-            scale = 1;
-            zIndex = 40;
-          } else if (isNext) {
-            xPosition = 50;
-            yPosition = 12;
-            rotation = 6;
-            scale = 0.9;
-            zIndex = 30;
-          } else if (isPrev) {
-            xPosition = -50;
-            yPosition = 12;
-            rotation = -6;
-            scale = 0.9;
-            zIndex = 30;
-          } else if (isThird) {
-            xPosition = 0;
-            yPosition = 24;
-            rotation = 0;
-            scale = 0.8;
-            zIndex = 20;
-          } else {
-            xPosition = 0;
-            yPosition = 36;
-            rotation = 0;
-            scale = 0.7;
-            zIndex = 10;
-          }
+      <motion.svg viewBox="0 0 1440 100" preserveAspectRatio="none"
+        style={{ width: "200%", position: "absolute", bottom: 6, left: "-10%" }}
+        animate={{ x: ["0%", "15%", "0%"] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <path d="M0,50 C180,90 360,10 540,50 C720,90 900,10 1080,50 C1260,90 1350,30 1440,50 L1440,100 L0,100 Z" fill="rgba(255,255,255,0.05)" />
+      </motion.svg>
 
-          return (
-            <motion.div
-              key={index}
-              className="absolute inset-0 cursor-grab active:cursor-grabbing"
-              style={{
-                x: isCurrent ? x : xPosition,
-                y: yPosition,
-                rotate: rotation,
-                scale: scale,
-                zIndex: zIndex,
-              }}
-              drag={isCurrent ? "x" : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={handleDragEnd}
-              animate={{
-                x: exitX !== 0 && isCurrent ? exitX : xPosition,
-                transition: { type: "spring", stiffness: 300, damping: 30 },
-              }}
-            >
-              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-                <Image
-                  src={testimonial.src}
-                  alt={testimonial.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 280px, 400px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                {isCurrent && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="absolute bottom-0 left-0 right-0 p-6 text-white"
-                  >
-                    <p className="text-sm md:text-base mb-3 line-clamp-3 italic">
-                      "{testimonial.quote}"
-                    </p>
-                    <h4 className="font-bold text-lg">{testimonial.name}</h4>
-                    <p className="text-sm text-white/80">
-                      {testimonial.designation}
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-2">
-        {testimonials.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setCurrentIndex(index);
-              setExitX(0);
-              setX(0);
-              onIndexChange?.(index);
-            }}
-            className={`h-2 rounded-full transition-all ${
-              index === currentIndex
-                ? "w-8 bg-blue-600"
-                : "w-2 bg-gray-300 hover:bg-gray-400"
-            }`}
-          />
-        ))}
-      </div>
+      {/* Hard white bottom edge */}
+      <svg viewBox="0 0 1440 56" preserveAspectRatio="none" style={{ width: "100%", display: "block" }}>
+        <path d="M0,28 C360,56 1080,0 1440,28 L1440,56 L0,56 Z" fill="white" />
+      </svg>
     </div>
   );
 }
-// ============= END STACKED TESTIMONIALS =============
 
+// ─── FLOATING ORBS ───────────────────────────────────────────
+function FloatingOrbs() {
+  const orbs = [
+    { size: 480, cx: "65%", cy: "30%", delay: 0,   dur: 9  },
+    { size: 280, cx: "85%", cy: "65%", delay: 2,   dur: 11 },
+    { size: 180, cx: "12%", cy: "72%", delay: 1,   dur: 7  },
+    { size: 140, cx: "38%", cy: "18%", delay: 3.5, dur: 8  },
+  ];
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {orbs.map((o, i) => (
+        <motion.div key={i}
+          animate={{ y: [0, -20, 0], x: [0, 10, 0], scale: [1, 1.07, 1] }}
+          transition={{ duration: o.dur, delay: o.delay, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: "absolute", left: o.cx, top: o.cy,
+            width: o.size, height: o.size, borderRadius: "50%",
+            background: "radial-gradient(circle at 40% 40%, rgba(201,151,58,0.13), transparent 68%)",
+            transform: "translate(-50%,-50%)", filter: "blur(2px)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── DIAGONAL LINES ──────────────────────────────────────────
+function DiagonalLines() {
+  return (
+    <svg style={{ position: "absolute", right: 0, top: 0, height: "100%", width: "38%", pointerEvents: "none", opacity: 0.055 }} viewBox="0 0 400 900" preserveAspectRatio="none">
+      {Array.from({ length: 14 }).map((_, i) => (
+        <line key={i} x1={i * 35 - 80} y1="0" x2={i * 35 + 220} y2="900" stroke={C.gold} strokeWidth="1" />
+      ))}
+    </svg>
+  );
+}
+
+// ─── GRID ────────────────────────────────────────────────────
+function HeroGrid() {
+  return (
+    <div style={{
+      position: "absolute", inset: 0, pointerEvents: "none",
+      backgroundImage: `linear-gradient(rgba(201,151,58,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(201,151,58,0.05) 1px, transparent 1px)`,
+      backgroundSize: "72px 72px",
+      maskImage: "radial-gradient(ellipse 65% 75% at 72% 50%, black 15%, transparent 78%)",
+      WebkitMaskImage: "radial-gradient(ellipse 65% 75% at 72% 50%, black 15%, transparent 78%)",
+    }} />
+  );
+}
+
+// ─── SECTION LABEL ───────────────────────────────────────────
+function SectionLabel({ children, light = false, center = false }: { children: React.ReactNode; light?: boolean; center?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "0.75rem", justifyContent: center ? "center" : "flex-start" }}>
+      <div style={{ width: 18, height: 1.5, background: C.gold, borderRadius: 2, flexShrink: 0 }} />
+      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 9.5, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase" as const, color: light ? C.goldLight : C.gold }}>
+        {children}
+      </span>
+      {center && <div style={{ width: 18, height: 1.5, background: C.gold, borderRadius: 2, flexShrink: 0 }} />}
+    </div>
+  );
+}
+
+// ─── FAQ ITEM ────────────────────────────────────────────────
+function FaqItem({ q, a, index }: { q: string; a: string; index: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.07 }}
+      viewport={{ once: true }}
+      style={{ border: `1px solid ${open ? C.gold : "rgba(8,21,41,0.1)"}`, borderRadius: 16, overflow: "hidden", background: open ? "rgba(201,151,58,0.02)" : "#fff", transition: "border-color 0.25s, background 0.25s" }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", gap: "0.75rem", minHeight: 56 }}
+      >
+        <span style={{ fontSize: "0.88rem", fontWeight: 600, color: C.navy, flex: 1, lineHeight: 1.5 }}>{q}</span>
+        <motion.div
+          animate={{ rotate: open ? 180 : 0, background: open ? C.gold : "rgba(8,21,41,0.07)" }}
+          transition={{ duration: 0.25 }}
+          style={{ width: 30, height: 30, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+        >
+          <ChevronDown size={14} color={open ? C.navy : C.slate} />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div key="body" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} style={{ overflow: "hidden" }}>
+            <div style={{ padding: "0 1.25rem 1.25rem" }}>
+              <p style={{ fontSize: "0.855rem", color: C.slate, lineHeight: 1.75, fontWeight: 300 }}>{a}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ─── MAIN ────────────────────────────────────────────────────
 export default function Home() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [scrolled,   setScrolled]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showTop,    setShowTop]    = useState(false);
+
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroBgY     = useTransform(scrollYProgress, [0, 1], ["0%", "24%"]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-      setShowBackToTop(window.scrollY > 500);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const fn = () => { setScrolled(window.scrollY > 48); setShowTop(window.scrollY > 400); };
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const navLinks = ["Beranda", "Layanan", "Profil", "FAQ", "Kontak"];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Floating Navbar */}
-      <motion.header
-        initial={{ y: -100 }}
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: "#fff", color: C.navy, overflowX: "hidden" }}>
+
+      {/* ══════════════════════ NAV ══════════════════════ */}
+      <motion.nav
+        initial={{ y: -80 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-white/90 backdrop-blur-xl shadow-lg py-2"
-            : "bg-transparent py-4"
-        }`}
+        transition={{ duration: 0.55, ease: [0.23, 1, 0.32, 1] }}
+        style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          background: scrolled ? "rgba(8,21,41,0.97)" : "transparent",
+          backdropFilter: scrolled ? "blur(24px)" : "none",
+          borderBottom: scrolled ? `1px solid ${C.border}` : "none",
+          transition: "all 0.4s ease",
+        }}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Image
-                  src="/logo3.png"
-                  alt="Logo DISPERINDAG"
-                  width={scrolled ? 45 : 50}
-                  height={scrolled ? 45 : 50}
-                  className="object-contain transition-all duration-300"
-                />
-              </motion.div>
-              <div>
-                <h1
-                  className={`font-bold transition-all duration-300 ${scrolled ? "text-xl text-gray-900" : "text-2xl text-white"}`}
-                >
-                  PORTAL LAYANAN DISPERINDAG
-                </h1>
-                <p
-                  className={`text-sm transition-all duration-300 ${scrolled ? "text-gray-500" : "text-white/70"}`}
-                >
-                  Provinsi Sumatera Barat
-                </p>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", height: 62 }}>
+          <a href="#hero" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
+            <div style={{ width: 42, height: 42, position: "relative", flexShrink: 0 }}>
+              <Image src="/logo.jpg" alt="Logo DISPERINDAG" fill className="object-contain" />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1.2 }}>DISPERINDAG</div>
+              <div style={{ fontSize: 9, color: C.goldLight, letterSpacing: "0.1em", textTransform: "uppercase", opacity: 0.8 }}>Sumatera Barat</div>
+            </div>
+          </a>
+
+          {/* Desktop */}
+          <div className="hidden md:flex" style={{ alignItems: "center", gap: "2rem" }}>
+            {navLinks.map(item => (
+              <motion.a key={item} href={`#${item === "Beranda" ? "hero" : item.toLowerCase()}`}
+                whileHover={{ y: -1, color: C.gold }}
+                style={{ textDecoration: "none", color: "rgba(255,255,255,0.72)", fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", textTransform: "uppercase", transition: "color 0.2s" }}
+              >{item}</motion.a>
+            ))}
+            <motion.a href="#layanan" whileHover={{ boxShadow: "0 6px 20px rgba(201,151,58,0.35)", y: -1 }}
+              style={{ padding: "8px 18px", background: C.gold, color: C.navy, borderRadius: 8, fontWeight: 700, fontSize: 12, textDecoration: "none", transition: "all 0.2s" }}
+            >Portal Layanan</motion.a>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button onClick={() => setMobileOpen(true)} className="flex md:hidden"
+            aria-label="Buka menu"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 4.5, alignItems: "flex-end", minWidth: 44, minHeight: 44, justifyContent: "center" }}
+          >
+            <span style={{ width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
+            <span style={{ width: 15, height: 2, background: C.gold, borderRadius: 2 }} />
+            <span style={{ width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
+          </button>
+        </div>
+      </motion.nav>
+
+      {/* ──── MOBILE MENU ──── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, zIndex: 200, background: C.navy, display: "flex", flexDirection: "column", overflow: "hidden" }}
+          >
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.875rem 1.25rem", borderBottom: `1px solid ${C.borderSub}`, flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${C.gold}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Mono', monospace", fontSize: 7.5, color: C.gold, fontWeight: 700 }}>DPRD</div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>DISPERINDAG</div>
+                  <div style={{ fontSize: 9, color: C.goldLight, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.75 }}>Sumatera Barat</div>
+                </div>
               </div>
+              <button onClick={() => setMobileOpen(false)}
+                style={{ width: 40, height: 40, border: `1px solid rgba(255,255,255,0.15)`, borderRadius: "50%", background: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+              ><X size={17} /></button>
             </div>
 
-            <nav className="hidden md:flex items-center gap-8">
-              {["Beranda", "Profil", "Layanan", "Galeri", "Kontak"].map(
-                (item) => (
-                  <motion.a
-                    key={item}
-                    href={`#${item.toLowerCase()}`}
-                    whileHover={{ y: -2 }}
-                    className={`font-medium transition-colors ${
-                      scrolled
-                        ? "text-gray-700 hover:text-blue-600"
-                        : "text-white/90 hover:text-white"
-                    }`}
-                  >
-                    {item}
-                  </motion.a>
-                ),
-              )}
-            </nav>
+            {/* Nav links */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "1.25rem 1.25rem 0" }}>
+              {navLinks.map((item, i) => (
+                <motion.a key={item}
+                  href={`#${item === "Beranda" ? "hero" : item.toLowerCase()}`}
+                  onClick={() => setMobileOpen(false)}
+                  initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 + 0.1 }}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "1rem 0.875rem", borderRadius: 12, textDecoration: "none",
+                    color: "#fff", fontSize: "1rem", fontWeight: 500,
+                    borderBottom: i < navLinks.length - 1 ? `1px solid ${C.borderSub}` : "none",
+                    transition: "background 0.15s",
+                  }}
+                  onTouchStart={e => (e.currentTarget.style.background = "rgba(201,151,58,0.08)")}
+                  onTouchEnd={e => (e.currentTarget.style.background = "transparent")}
+                >
+                  <span>{item}</span>
+                  <ArrowRight size={15} color={C.gold} />
+                </motion.a>
+              ))}
+            </div>
 
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className={`md:hidden p-2 rounded-lg transition-colors ${
-                scrolled ? "hover:bg-gray-100" : "hover:bg-white/10"
-              }`}
-            >
-              <Menu
-                className={`w-6 h-6 ${scrolled ? "text-gray-900" : "text-white"}`}
-              />
-            </button>
-          </div>
-        </div>
-      </motion.header>
+            {/* Bottom CTA */}
+            <div style={{ padding: "1.25rem", flexShrink: 0 }}>
+              <motion.a href="#layanan" onClick={() => setMobileOpen(false)}
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "0.975rem", background: C.gold, color: C.navy, borderRadius: 14, fontWeight: 700, fontSize: "0.95rem", textDecoration: "none", letterSpacing: "0.04em" }}
+              >
+                Akses Portal Layanan <ArrowRight size={17} />
+              </motion.a>
+              <p style={{ textAlign: "center", fontSize: 10.5, color: "rgba(255,255,255,0.28)", marginTop: "0.875rem", letterSpacing: "0.06em" }}>
+                © 2026 DISPERINDAG Sumatera Barat
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <MobileMenu
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-      />
-
-      {/* Hero Section */}
-      <section
-        id="home"
-        className="relative min-h-screen flex items-center overflow-hidden"
+      {/* ══════════════════════ HERO ══════════════════════ */}
+      <section id="hero" ref={heroRef}
+        style={{ minHeight: "100svh", background: C.navy, position: "relative", overflow: "hidden", display: "flex", alignItems: "center" }}
       >
-        <motion.div
-          initial={{ scale: 1.2 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.5 }}
-          className="absolute inset-0"
-        >
-          <Image
-            src="/kota.png"
-            alt="Hero"
-            fill
-            priority
-            className="object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-linear-to-r from-[#0f1d3a]/95 via-[#0f1d3a]/85 to-transparent" />
+        {/* Background image parallax */}
+        <motion.div style={{ position: "absolute", inset: 0, y: heroBgY }}>
+          <Image src="/kota.png" alt="Kota Padang" fill priority className="object-cover object-center" style={{ opacity: 0.14 }} />
         </motion.div>
 
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-white/10 rounded-full" />
-          <div className="absolute top-3/4 left-1/2 w-1.5 h-1.5 bg-white/10 rounded-full" />
-          <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-white/10 rounded-full" />
-          <div className="absolute top-2/3 left-1/3 w-2 h-2 bg-white/5 rounded-full" />
-          <div className="absolute top-1/5 left-2/3 w-1.5 h-1.5 bg-white/10 rounded-full" />
-          <div className="absolute top-4/5 left-1/5 w-1 h-1 bg-white/10 rounded-full" />
-          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 w-full h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
-        </div>
+        <HeroGrid />
+        <DiagonalLines />
+        <FloatingOrbs />
 
-        <div className="container mx-auto px-4 relative z-20">
-          <div className="max-w-4xl">
-            <motion.h2
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight"
+        {/* Spinning ring — desktop only subtle deco */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute", right: "-18vw", top: "50%",
+            width: "72vw", height: "72vw", maxWidth: 720, maxHeight: 720,
+            borderRadius: "50%", border: "1px dashed rgba(201,151,58,0.13)",
+            transform: "translateY(-50%)", pointerEvents: "none",
+          }}
+        />
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 55, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute", right: "calc(-18vw + 65px)", top: "50%",
+            width: "calc(72vw - 130px)", height: "calc(72vw - 130px)",
+            maxWidth: 590, maxHeight: 590,
+            borderRadius: "50%", border: "1px solid rgba(201,151,58,0.07)",
+            transform: "translateY(-50%)", pointerEvents: "none",
+          }}
+        />
+
+        {/* Horizontal accent line */}
+        <motion.div
+          initial={{ scaleX: 0 }} animate={{ scaleX: 1 }}
+          transition={{ duration: 1.6, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
+          style={{ position: "absolute", left: 0, top: "50%", width: "32%", height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, opacity: 0.22, transformOrigin: "left", pointerEvents: "none" }}
+        />
+
+        {/* Content */}
+        <motion.div style={{ opacity: heroOpacity, position: "relative", zIndex: 10, width: "100%" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto", padding: "clamp(90px, 14vw, 140px) 1.5rem clamp(140px, 18vw, 200px)" }}>
+
+            {/* Badge */}
+            <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px 5px 8px", border: `1px solid ${C.border}`, borderRadius: 100, marginBottom: "1.75rem", fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: C.goldLight, background: "rgba(201,151,58,0.08)" }}
             >
-              Selamat Datang di
-              <span className="block text-transparent bg-clip-text bg-linear-to-r from-amber-400 to-amber-200">
-                Portal Layanan
-              </span>
-            </motion.h2>
+              <motion.span
+                animate={{ opacity: [1, 0.3, 1], scale: [1, 1.6, 1] }}
+                transition={{ duration: 2.5, repeat: Infinity }}
+                style={{ width: 6, height: 6, borderRadius: "50%", background: C.gold, boxShadow: `0 0 10px ${C.gold}`, display: "block", flexShrink: 0 }}
+              />
+              Portal Layanan Publik Resmi
+            </motion.div>
+
+            {/* Heading — large, editorial */}
+            <motion.h1
+              initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.85, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+              style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(2.8rem, 8vw, 5.8rem)", fontWeight: 600, lineHeight: 1.05, color: "#fff", marginBottom: "1.25rem", maxWidth: 860 }}
+            >
+              Dinas<br />
+              <em style={{ fontStyle: "italic", color: C.goldLight }}>Perindustrian</em><br />
+              &amp; Perdagangan
+            </motion.h1>
+
+            {/* Sub-label */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.22 }}
+              style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: "1.25rem" }}
+            >
+              <div style={{ width: 36, height: 1.5, background: C.gold, borderRadius: 2 }} />
+              <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 11, color: C.goldLight, letterSpacing: "0.14em", textTransform: "uppercase" }}>Provinsi Sumatera Barat</span>
+            </motion.div>
 
             <motion.p
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl"
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              style={{ fontSize: "clamp(0.875rem, 2.4vw, 1.05rem)", lineHeight: 1.78, color: "rgba(255,255,255,0.56)", maxWidth: 480, marginBottom: "2.5rem", fontWeight: 300 }}
             >
-              Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat
-              berkomitmen memberikan pelayanan terbaik untuk masyarakat.
+              Mewujudkan industri yang tangguh, perdagangan yang adil, dan UMKM yang berdaya saing melalui pelayanan prima berbasis digital.
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="flex flex-wrap gap-4"
+            {/* CTAs */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.4 }}
+              style={{ display: "flex", gap: "0.875rem", flexWrap: "wrap" }}
             >
-              <Button
-                size="lg"
-                className="bg-amber-400 hover:bg-amber-500 text-gray-900 text-lg px-8 py-6 rounded-2xl shadow-lg shadow-amber-400/30"
+              <motion.a href="#layanan"
+                whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(201,151,58,0.38)" }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "clamp(11px,2vw,14px) clamp(20px,3vw,28px)", background: C.gold, color: C.navy, borderRadius: 10, fontWeight: 700, fontSize: "clamp(13px,2vw,15px)", textDecoration: "none", letterSpacing: "0.04em" }}
               >
-                Lihat Layanan
-              </Button>
+                Akses Layanan
+                <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1.8, repeat: Infinity }}>
+                  <ArrowRight size={16} />
+                </motion.span>
+              </motion.a>
+              <motion.a href="#profil"
+                whileHover={{ borderColor: C.gold, color: C.gold, background: "rgba(201,151,58,0.08)" }}
+                whileTap={{ scale: 0.97 }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "clamp(11px,2vw,14px) clamp(20px,3vw,28px)", background: "transparent", color: "#fff", borderRadius: 10, border: "1px solid rgba(255,255,255,0.2)", fontWeight: 500, fontSize: "clamp(13px,2vw,15px)", textDecoration: "none", transition: "all 0.25s" }}
+              >
+                Tentang Kami
+              </motion.a>
             </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        <svg
-          className="absolute bottom-0 left-0 w-full"
-          viewBox="0 0 1440 200"
-          preserveAspectRatio="none"
+        {/* Animated waves */}
+        <HeroWaves />
+
+        {/* Scroll hint */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}
+          style={{ position: "absolute", bottom: 70, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, color: "rgba(255,255,255,0.25)", fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase" }}
         >
-          <path
-            d="M0,100 C360,200 1080,0 1440,120 L1440,200 L0,200 Z"
-            fill="white"
-            opacity="0.1"
-          />
-          <path
-            d="M0,120 C360,180 1080,40 1440,100 L1440,200 L0,200 Z"
-            fill="white"
-          />
-        </svg>
+          <span>scroll</span>
+          <motion.div animate={{ y: [0, 7, 0], opacity: [0.25, 0.7, 0.25] }} transition={{ duration: 2, repeat: Infinity }}>
+            <ChevronDown size={15} color="rgba(201,151,58,0.55)" />
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Layanan */}
-      <section id="layanan" className="relative overflow-hidden">
-        {/* Background gelap untuk lamp effect */}
-        <div className="absolute inset-0" />
+      {/* ══════════════════════ LAYANAN ══════════════════════ */}
+      <section id="layanan" style={{ padding: "clamp(60px,10vw,100px) 1.25rem", background: "#faf6ef", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`, opacity: 0.25 }} />
 
-        <LampContainer className="!pt-40">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-center max-w-4xl mx-auto px-4"
-          >
-            <span className="text-sm font-bold uppercase tracking-widest text-cyan-400 mb-3 block">
-              LAYANAN KAMI
-            </span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-              Apa yang bisa{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-                kami bantu?
-              </span>
-            </h2>
-            <p className="text-white/70 text-lg max-w-2xl mx-auto">
-              Kami menyediakan berbagai layanan untuk memenuhi kebutuhan Anda.
-              Pilih layanan yang sesuai dan sampaikan kebutuhan Anda.
-            </p>
-          </motion.div>
-        </LampContainer>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          {/* Header */}
+          <div style={{ marginBottom: "2.25rem" }}>
+            <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+              <SectionLabel>Layanan Kami</SectionLabel>
+            </motion.div>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+              <motion.h2 initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.08 }}
+                style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.9rem, 5vw, 3.2rem)", fontWeight: 600, lineHeight: 1.15, color: C.navy }}
+              >
+                Apa yang dapat <em style={{ fontStyle: "italic", color: C.gold }}>kami bantu</em>?
+              </motion.h2>
+              <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.16 }}
+                style={{ fontSize: "0.875rem", color: C.slate, lineHeight: 1.72, fontWeight: 300, maxWidth: 360 }}
+              >
+                Portal layanan terpadu untuk kebutuhan masyarakat dan pelaku usaha Sumatera Barat.
+              </motion.p>
+            </div>
+          </div>
 
-        <div className="container mx-auto px-4 relative z-20 -mt-40">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto"
-          >
-            {services.map((service, index) => {
-              const colors = {
-                blue: {
-                  bg: "bg-blue-50",
-                  text: "text-blue-600",
-                  border: "border-blue-500",
-                  btn: "bg-blue-600 hover:bg-blue-700",
-                  light: "bg-blue-100",
-                },
-                red: {
-                  bg: "bg-red-50",
-                  text: "text-red-600",
-                  border: "border-red-500",
-                  btn: "bg-red-600 hover:bg-red-700",
-                  light: "bg-red-100",
-                },
-                teal: {
-                  bg: "bg-teal-50",
-                  text: "text-teal-600",
-                  border: "border-teal-500",
-                  btn: "bg-teal-600 hover:bg-teal-700",
-                  light: "bg-teal-100",
-                },
-              };
-              const color = colors[service.color as keyof typeof colors];
-
-              const IconComponent =
-                service.title === "Survey Kepuasan"
-                  ? ClipboardList
-                  : service.title === "Layanan Aduan"
-                    ? Megaphone
-                    : BookOpen;
-
-              return (
-                <motion.div key={index} variants={itemVariants}>
-                  <Card className="group h-full flex flex-col overflow-hidden hover:shadow-2xl transition-all duration-500 bg-white">
-                    <div
-                      className={`h-2 w-full bg-gradient-to-r from-${service.color}-500 to-${service.color}-400`}
-                    />
-                    <CardHeader>
-                      <CardTitle className="text-2xl text-gray-900">
-                        {service.title}
-                      </CardTitle>
-                      <CardDescription className="text-base text-gray-600">
-                        {service.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1">
-                      <p className="text-gray-600 leading-relaxed">
-                        {service.detail}
-                      </p>
-                    </CardContent>
-                    <CardFooter>
-                      <a
-                        href={service.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full"
-                      >
-                        <Button
-                          className={`w-full ${color.btn} text-white font-semibold group/btn py-6 text-base rounded-xl`}
-                        >
-                          {service.cta}
-                          <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                        </Button>
-                      </a>
-                    </CardFooter>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="mt-16"
-          >
-            <h4 className="text-2xl font-bold text-center text-gray-900 mb-8">
-              Layanan Lainnya
-            </h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {additionalServices.map((service, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ y: -5 }}
-                  className="p-6 bg-slate-50 rounded-xl text-center group cursor-pointer hover:bg-blue-50 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                    <service.icon className="w-6 h-6 text-blue-600" />
+          {/* Service cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 290px), 1fr))", gap: "1rem" }}>
+            {services.map((svc, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                whileHover={{ y: -6, boxShadow: "0 20px 52px rgba(8,21,41,0.1)" }}
+                style={{ background: "#fff", borderRadius: 18, border: "1px solid rgba(8,21,41,0.07)", overflow: "hidden", display: "flex", flexDirection: "column" }}
+              >
+                <div style={{ height: 4, background: svc.accent }} />
+                <div style={{ padding: "1.4rem", flex: 1, display: "flex", flexDirection: "column", gap: "0.875rem" }}>
+                  {/* Icon + tag */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                    <div style={{ width: 46, height: 46, borderRadius: 12, background: svc.accentBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svc.icon size={21} color={svc.accent} strokeWidth={1.8} />
+                    </div>
+                    <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 100, background: svc.accentBg, color: svc.accent, fontFamily: "'Space Mono', monospace" }}>
+                      {svc.tag}
+                    </span>
                   </div>
-                  <h5 className="font-semibold text-gray-900 mb-1">
-                    {service.title}
-                  </h5>
-                  <p className="text-xs text-gray-500">{service.description}</p>
-                </motion.div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.35rem", fontWeight: 600, color: C.navy, lineHeight: 1.25 }}>{svc.title}</div>
+                  <div style={{ fontSize: "0.84rem", color: C.slate, lineHeight: 1.68, flex: 1 }}>{svc.description}</div>
+                  <motion.a href={svc.href} target="_blank" rel="noopener noreferrer"
+                    whileHover={{ background: svc.accent, color: "#fff", borderColor: svc.accent }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "0.875rem 1rem", borderRadius: 10, border: "1px solid rgba(8,21,41,0.11)", fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", textDecoration: "none", color: C.navy, background: "transparent", transition: "all 0.2s", minHeight: 48 }}
+                  >
+                    {svc.cta} <ArrowRight size={14} />
+                  </motion.a>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Additional services */}
+          <div style={{ marginTop: "1.5rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%,160px), 1fr))", gap: "0.875rem" }}>
+            {additionalServices.map((svc, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                whileHover={{ y: -4, background: C.navy, borderColor: C.gold }}
+                whileTap={{ scale: 0.97 }}
+                style={{ padding: "1.15rem 1rem", background: "#fff", border: "1px solid rgba(8,21,41,0.07)", borderRadius: 14, textAlign: "center", cursor: "default", transition: "all 0.28s" }}
+                onMouseEnter={e => { const el = e.currentTarget; el.querySelectorAll<HTMLElement>("[data-t]").forEach(x => x.style.color = "#fff"); el.querySelectorAll<HTMLElement>("[data-d]").forEach(x => x.style.color = "rgba(255,255,255,0.5)"); el.querySelectorAll<HTMLElement>("[data-ic]").forEach(x => x.style.background = "rgba(201,151,58,0.15)"); }}
+                onMouseLeave={e => { const el = e.currentTarget; el.querySelectorAll<HTMLElement>("[data-t]").forEach(x => x.style.color = C.navy); el.querySelectorAll<HTMLElement>("[data-d]").forEach(x => x.style.color = C.slateLight); el.querySelectorAll<HTMLElement>("[data-ic]").forEach(x => x.style.background = "#faf6ef"); }}
+              >
+                <div data-ic="" style={{ width: 40, height: 40, borderRadius: 10, background: "#faf6ef", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem", transition: "background 0.28s" }}>
+                  <svc.icon size={18} color={C.navy} strokeWidth={1.7} />
+                </div>
+                <div data-t="" style={{ fontSize: 13, fontWeight: 600, color: C.navy, marginBottom: 3, transition: "color 0.28s" }}>{svc.title}</div>
+                <div data-d="" style={{ fontSize: 11.5, color: C.slateLight, lineHeight: 1.5, transition: "color 0.28s" }}>{svc.desc}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ PROFIL ══════════════════════ */}
+      <section id="profil" style={{ background: C.navy, padding: "clamp(60px,10vw,100px) 1.25rem", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, right: 0, width: "60%", height: "100%", background: "radial-gradient(ellipse at right center, rgba(201,151,58,0.07) 0%, transparent 62%)", pointerEvents: "none" }} />
+
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))", gap: "clamp(2rem,5vw,4rem)", alignItems: "center", position: "relative" }}>
+          <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
+            <SectionLabel light>Tentang Kami</SectionLabel>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.9rem, 5vw, 3.2rem)", fontWeight: 600, lineHeight: 1.15, color: "#fff", marginBottom: "1.25rem" }}>
+              Pimpinan &amp; <em style={{ fontStyle: "italic", color: C.goldLight }}>Tim DISPERINDAG</em>
+            </h2>
+            <p style={{ fontSize: "0.92rem", lineHeight: 1.8, color: "rgba(255,255,255,0.56)", fontWeight: 300, marginBottom: "0.875rem" }}>
+              Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat berkomitmen mewujudkan industri yang tangguh, berdaya saing, dan berkelanjutan melalui pelayanan prima dan inovasi digital.
+            </p>
+            <p style={{ fontSize: "0.92rem", lineHeight: 1.8, color: "rgba(255,255,255,0.56)", fontWeight: 300, marginBottom: "1.75rem" }}>
+              Kami mendorong produk lokal Sumatera Barat go international melalui kebijakan perdagangan yang berpihak pada masyarakat.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+              {["Pelayanan Prima", "Inovasi Digital", "UMKM Berdaya Saing", "Go International", "Transparansi Publik"].map(p => (
+                <span key={p} style={{ padding: "5px 12px", border: `1px solid ${C.border}`, borderRadius: 100, fontSize: 11, color: C.goldLight, background: "rgba(201,151,58,0.08)", letterSpacing: "0.04em" }}>{p}</span>
               ))}
             </div>
           </motion.div>
+
+          <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.14 }}
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}
+          >
+            <motion.div whileHover={{ scale: 1.02 }} style={{ gridRow: "span 2", borderRadius: 14, overflow: "hidden", position: "relative", border: `1px solid ${C.borderSub}`, minHeight: 220 }}>
+              <Image src="/1.jpeg" alt="Kegiatan 1" fill className="object-cover" style={{ opacity: 0.88 }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(8,21,41,0.4), transparent)" }} />
+            </motion.div>
+            {["/2.jpeg", "/3.jpeg"].map((src, i) => (
+              <motion.div key={i} whileHover={{ scale: 1.02 }} style={{ borderRadius: 14, overflow: "hidden", position: "relative", aspectRatio: "4/3", border: `1px solid ${C.borderSub}` }}>
+                <Image src={src} alt={`Kegiatan ${i + 2}`} fill className="object-cover" style={{ opacity: 0.88 }} />
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
-      {/* Profil Dinas*/}
-      <section id="profil" className="py-10 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-              Pimpinan & Tim DISPERINDAG
-            </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Kenali lebih dekat para pimpinan dan tim yang berdedikasi
-              memberikan pelayanan terbaik untuk masyarakat Sumatera Barat
-            </p>
+      {/* ══════════════════════ FAQ ══════════════════════ */}
+      <section id="faq" style={{ padding: "clamp(60px,10vw,100px) 1.25rem", background: "#fff" }}>
+        <div style={{ maxWidth: 840, margin: "0 auto" }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: "center", marginBottom: "2.75rem" }}>
+            <SectionLabel center>Pertanyaan Umum</SectionLabel>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.85rem, 5vw, 3rem)", fontWeight: 600, color: C.navy, lineHeight: 1.2, marginTop: "0.25rem" }}>
+              Pertanyaan yang <em style={{ fontStyle: "italic", color: C.gold }}>Sering Diajukan</em>
+            </h2>
+          </motion.div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+            {faqs.map((item, i) => <FaqItem key={i} q={item.q} a={item.a} index={i} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════ KONTAK ══════════════════════ */}
+      <section id="kontak" style={{ padding: "clamp(60px,10vw,100px) 1.25rem", background: "#faf6ef" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 380px), 1fr))", gap: "clamp(2rem,5vw,4rem)", alignItems: "start" }}>
+          <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <SectionLabel>Hubungi Kami</SectionLabel>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "clamp(1.9rem, 5vw, 3.2rem)", fontWeight: 600, color: C.navy, marginBottom: "2rem" }}>
+              Lokasi &amp; <em style={{ fontStyle: "italic", color: C.gold }}>Kontak</em>
+            </h2>
+            {[
+              { icon: MapPin, label: "Alamat",  val: "Jl. Aur No.1, Padang Pasir,\nKec. Padang Barat, Kota Padang" },
+              { icon: Phone,  label: "Telepon", val: "+62 821 7101 9451" },
+              { icon: Mail,   label: "Email",   val: "disperindang@sumbarprov.go.id" },
+            ].map(({ icon: Icon, label, val }, i) => (
+              <motion.div key={i} initial={{ opacity: 0, x: -14 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                style={{ display: "flex", gap: "1rem", alignItems: "flex-start", marginBottom: "1.5rem" }}
+              >
+                <div style={{ width: 44, height: 44, borderRadius: 10, background: C.navy, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon size={17} color={C.gold} strokeWidth={1.8} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: C.slateLight, marginBottom: 4, fontFamily: "'Space Mono', monospace" }}>{label}</div>
+                  <div style={{ fontSize: "0.88rem", color: C.navy, fontWeight: 500, whiteSpace: "pre-line", lineHeight: 1.55 }}>{val}</div>
+                </div>
+              </motion.div>
+            ))}
+            <div style={{ display: "flex", gap: "0.625rem", marginTop: "1.5rem", flexWrap: "wrap" }}>
+              {[Facebook, Twitter, Instagram, Youtube, Linkedin].map((Icon, i) => (
+                <motion.a key={i} href="#" whileHover={{ background: C.navy, borderColor: C.navy, y: -2 }} whileTap={{ scale: 0.9 }}
+                  style={{ width: 44, height: 44, borderRadius: 10, background: "#fff", border: "1px solid rgba(8,21,41,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: C.slate, transition: "all 0.2s", textDecoration: "none" }}
+                ><Icon size={16} /></motion.a>
+              ))}
+            </div>
           </motion.div>
 
-          <div className="relative pb-20">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-3xl" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-amber-400/5 rounded-full blur-3xl" />
-
-            <StackedTestimonials
-              testimonials={testimonials}
-              onIndexChange={() => {}}
+          <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.14 }}
+            style={{ borderRadius: 18, overflow: "hidden", border: "1px solid rgba(8,21,41,0.09)", boxShadow: "0 8px 32px rgba(8,21,41,0.07)", aspectRatio: "4/3", minHeight: 260 }}
+          >
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2793680888847!2d100.354123!3d-0.955789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwNTcnMjAuOCJTIDEwMMKwMjEnMTQuOSJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
+              width="100%" height="100%" style={{ border: 0, display: "block" }}
+              allowFullScreen loading="lazy" title="Peta Lokasi DISPERINDAG"
             />
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <FAQSection />
-
-      {/* Lokasi & Kontak */}
-      <section id="kontak" className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-12">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <span className="text-sm font-bold uppercase tracking-widest text-blue-600 mb-2 block">
-                Hubungi Kami
-              </span>
-              <h3 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6">
-                Lokasi & Kontak
-              </h3>
-
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                    <MapPin className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Alamat</h4>
-                    <p className="text-gray-600">
-                      Jl. Aur No.1,Padang Pasir,Kec. Padang Bar., Kota
-                      Padang,Sumatera Barat,Indonesia,Kecamatan Padang
-                      Barat,Sumatera Barat, Indonesia
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                    <Phone className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Telepon
-                    </h4>
-                    <p className="text-gray-600">+6282171019451</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                    <Mail className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-                    <p className="text-gray-600">
-                      disperindang@sumbarprov.go.id
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                    <Clock className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Jam Operasional
-                    </h4>
-                    <p className="text-gray-600">
-                      Senin - Jumat, 08.00 - 16.00 WIB
-                    </p>
-                    <p className="text-gray-500 text-sm">
-                      Sabtu, Minggu & Libur Nasional Tutup
-                    </p>
-                  </div>
-                </div>
+      {/* ══════════════════════ FOOTER ══════════════════════ */}
+      <footer style={{ background: C.navy, padding: "3.5rem 1.25rem 2rem" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: "2.25rem", paddingBottom: "2.25rem", borderBottom: `1px solid ${C.borderSub}` }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "0.875rem" }}>
+                <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${C.gold}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Mono', monospace", fontSize: 7.5, color: C.gold, fontWeight: 700 }}>DPRD</div>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>DISPERINDAG SUMBAR</span>
               </div>
-
-              <div className="mt-8">
-                <h4 className="font-semibold text-gray-900 mb-4">Ikuti Kami</h4>
-                <div className="flex gap-3">
-                  {[
-                    { icon: Facebook, color: "bg-blue-600", href: "#" },
-                    { icon: Twitter, color: "bg-sky-500", href: "#" },
-                    { icon: Instagram, color: "bg-pink-600", href: "#" },
-                    { icon: Youtube, color: "bg-red-600", href: "#" },
-                    { icon: Linkedin, color: "bg-blue-700", href: "#" },
-                  ].map((social, index) => (
-                    <motion.a
-                      key={index}
-                      href={social.href}
-                      whileHover={{ y: -3 }}
-                      className={`w-10 h-10 ${social.color} rounded-lg flex items-center justify-center text-white hover:shadow-lg transition-all`}
-                    >
-                      <social.icon className="w-5 h-5" />
-                    </motion.a>
-                  ))}
-                </div>
+              <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.38)", lineHeight: 1.7, fontWeight: 300 }}>Portal Layanan Publik Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat.</p>
+            </div>
+            {[
+              { title: "Layanan", items: ["Buku Tamu Digital", "Survey Kepuasan", "Layanan Aduan", "Izin Usaha"] },
+              { title: "Tautan",  items: ["Beranda", "Profil Dinas", "FAQ", "Hubungi Kami"] },
+              { title: "Kontak",  items: ["disperindang@sumbarprov.go.id", "+62 821 7101 9451", "Jl. Aur No.1, Padang Barat"] },
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: C.gold, marginBottom: "1rem", fontFamily: "'Space Mono', monospace" }}>{col.title}</div>
+                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  {col.items.map(l => <li key={l} style={{ fontSize: 12.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>{l}</li>)}
+                </ul>
               </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="rounded-2xl overflow-hidden shadow-xl h-screen max-h-96"
-            >
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2793680888847!2d100.354123!3d-0.955789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwNTcnMjAuOCJTIDEwMMKwMjEnMTQuOSJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                className="grayscale hover:grayscale-0 transition-all duration-500"
-              />
-            </motion.div>
+            ))}
           </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white pt-16 pb-8">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Image
-                  src="/logo3.png"
-                  alt="Logo DISPERINDAG"
-                  width={50}
-                  height={50}
-                  className="object-contain"
-                />
-                <div>
-                  <p className="font-bold text-lg">DISPERINDAG</p>
-                  <p className="text-white/50 text-sm">
-                    Provinsi Sumatera Barat
-                  </p>
-                </div>
-              </div>
-              <p className="text-white/40 text-sm leading-relaxed">
-                Berkomitmen untuk pelayanan publik yang transparan, akuntabel,
-                dan berintegritas.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Layanan</h4>
-              <ul className="space-y-2 text-white/50 text-sm">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Survey Kepuasan
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Layanan Aduan
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Buku Tamu Digital
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Informasi Izin Usaha
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Tautan</h4>
-              <ul className="space-y-2 text-white/50 text-sm">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Tentang Kami
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Berita
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Galeri
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Kebijakan Privasi
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Newsletter</h4>
-              <p className="text-white/40 text-sm mb-3">
-                Dapatkan update terbaru dari DISPERINDAG
-              </p>
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Email Anda"
-                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-l-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-r-lg transition-colors">
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-white/10 pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <p className="text-white/30 text-sm text-center md:text-left">
-                © 2026 Dinas Perindustrian dan Perdagangan Provinsi Sumatera
-                Barat. All Rights Reserved.
-              </p>
-              <div className="flex gap-4">
-                <a
-                  href="#"
-                  className="text-white/30 hover:text-white transition-colors text-sm"
-                >
-                  Kebijakan Privasi
-                </a>
-                <a
-                  href="#"
-                  className="text-white/30 hover:text-white transition-colors text-sm"
-                >
-                  Syarat & Ketentuan
-                </a>
-                <a
-                  href="#"
-                  className="text-white/30 hover:text-white transition-colors text-sm"
-                >
-                  Sitemap
-                </a>
-              </div>
-            </div>
+          <div style={{ paddingTop: "1.75rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", fontSize: 11, color: "rgba(255,255,255,0.27)" }}>
+            <span>© 2026 DISPERINDAG Provinsi Sumatera Barat. All rights reserved.</span>
+            <span>Dibuat dengan ❤ untuk masyarakat Sumatera Barat</span>
           </div>
         </div>
       </footer>
 
-      {/* Back to Top Button */}
+      {/* ══════════════════════ BACK TO TOP ══════════════════════ */}
       <AnimatePresence>
-        {showBackToTop && (
+        {showTop && (
           <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            whileHover={{ scale: 1.1 }}
-            onClick={scrollToTop}
-            className="fixed bottom-6 right-6 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700 transition-colors"
+            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ y: -3, boxShadow: "0 10px 30px rgba(201,151,58,0.45)" }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Kembali ke atas"
+            style={{ position: "fixed", bottom: "1.5rem", right: "1.5rem", width: 48, height: 48, borderRadius: 14, background: C.gold, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(201,151,58,0.4)", zIndex: 90 }}
           >
-            <ArrowRight className="w-5 h-5 -rotate-90" />
+            <ChevronUp size={20} color={C.navy} strokeWidth={2.5} />
           </motion.button>
         )}
       </AnimatePresence>
