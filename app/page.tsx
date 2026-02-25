@@ -246,7 +246,7 @@ export default function Home() {
         <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", height: 62 }}>
           <a href="#hero" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flexShrink: 0 }}>
             <div style={{ width: 42, height: 42, position: "relative", flexShrink: 0 }}>
-              <Image src="/logo.jpg" alt="Logo DISPERINDAG" fill className="object-contain" />
+              <Image src="/logo3.png" alt="Logo DISPERINDAG" fill className="object-contain" />
             </div>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase", lineHeight: 1.2 }}>DISPERINDAG</div>
@@ -348,7 +348,7 @@ export default function Home() {
       >
         {/* Background image parallax */}
         <motion.div style={{ position: "absolute", inset: 0, y: heroBgY }}>
-          <Image src="/kota.png" alt="Kota Padang" fill priority className="object-cover object-center" style={{ opacity: 0.14 }} />
+          <Image src="/home.png" alt="Kota Padang" fill priority className="object-cover object-center" style={{ opacity: 0.14 }} />
         </motion.div>
 
         <HeroGrid />
