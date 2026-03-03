@@ -26,7 +26,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -332,7 +331,7 @@ export default function TamuPage() {
           variant="outline"
           className={`text-[10px] px-1 py-0 ${
             item["Jenis Kelamin"] === "Laki-laki"
-              ? "bg-blue-50 text-blue-700 border-blue-200"
+              ? "bg-[#c9973a]/10 text-[#c9973a] border-blue-200"
               : "bg-pink-50 text-pink-700 border-pink-200"
           }`}
         >
@@ -438,7 +437,7 @@ export default function TamuPage() {
             setSelectedTamu(item);
             setDialogOpen(true);
           }}
-          className="hover:bg-green-100 h-6 w-6 p-0"
+          className="hover:bg-[#c9973a]/10 h-6 w-6 p-0"
         >
           <Eye className="h-3 w-3 text-green-600" />
         </Button>
@@ -492,36 +491,44 @@ export default function TamuPage() {
         <span className="font-medium text-gray-700">Data Buku Tamu</span>
       </div>
 
-      {/* Header */}
-      <div className="bg-white border rounded-xl p-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl pointer-events-none"></div>
+      {/* Premium Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-700 to-teal-800 p-8 rounded-3xl shadow-xl shadow-emerald-100">
+        {/* Dekorasi Cahaya */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/10 rounded-full blur-3xl -ml-10 -mb-10" />
         
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Data Buku Tamu
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className="bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
+                Database System
+              </Badge>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
+              DATA BUKU <span className="text-emerald-200">TAMU</span>
             </h1>
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              Total {total || 0} kunjungan tercatat
+            <p className="text-emerald-100/60 text-xs font-medium mt-1 flex items-center gap-2">
+              <Users className="w-3 h-3" />
+              Monitoring {total || 0} kunjungan tamu tercatat secara real-time
             </p>
           </div>
-          <div className="flex gap-3">
+          
+          <div className="flex flex-wrap gap-2">
             <Button
               onClick={refresh}
               variant="outline"
               size="sm"
-              className="gap-2 border-gray-200 hover:bg-white hover:text-green-600 hover:border-green-200 transition-all shadow-sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2"
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> 
-              Refresh Data
+              Refresh
             </Button>
             <Button
               variant="outline"
               size="sm"
               className={cn(
-                "gap-2 border-gray-200 transition-all shadow-sm",
-                showFilters ? "bg-green-50 text-green-700 border-green-200" : "hover:bg-white hover:text-green-600 hover:border-green-200"
+                "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2",
+                showFilters && "bg-white/30 border-white/40"
               )}
               onClick={() => setShowFilters(!showFilters)}
             >
@@ -531,42 +538,45 @@ export default function TamuPage() {
             <Button
               onClick={exportToExcel}
               size="sm"
-              className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow-sm shadow-green-200"
+              className="bg-emerald-500 hover:bg-emerald-400 text-white border-none shadow-lg shadow-emerald-900/20 gap-2"
             >
               <Download className="h-4 w-4" />
-              Export
+              Export Excel
             </Button>
           </div>
         </div>
       </div>
 
       {/* Statistik Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-            { label: "Total Kunjungan", value: stat.total, icon: Users, color: "green", sub: "Total keseluruhan" },
-            { label: "Hari Ini", value: stat.hariIni, icon: Calendar, color: "blue", sub: `${stat.total ? Math.round((stat.hariIni / stat.total) * 100) : 0}% dari total` },
-            { label: "Minggu Ini", value: stat.mingguIni, icon: TrendingUp, color: "purple", sub: `${stat.total ? Math.round((stat.mingguIni / stat.total) * 100) : 0}% dari total` },
-            { label: "Rata-rata/Hari", value: Math.round(stat.mingguIni / 7) || 0, icon: Clock, color: "orange", sub: "7 hari terakhir" }
+            { label: "Total Kunjungan", value: stat.total, icon: Users, color: "#10b981", sub: "Total keseluruhan" },
+            { label: "Hari Ini", value: stat.hariIni, icon: Calendar, color: "#3b82f6", sub: `${stat.total ? Math.round((stat.hariIni / stat.total) * 100) : 0}% dari total` },
+            { label: "Minggu Ini", value: stat.mingguIni, icon: TrendingUp, color: "#8b5cf6", sub: `${stat.total ? Math.round((stat.mingguIni / stat.total) * 100) : 0}% dari total` },
+            { label: "Rata-rata/Hari", value: Math.round(stat.mingguIni / 7) || 0, icon: Clock, color: "#f59e0b", sub: "7 hari terakhir" }
         ].map((item, idx) => (
-            <Card key={idx} className="border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-              <CardContent className="p-5">
-                <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity bg-${item.color}-500 rounded-bl-3xl`}>
-                    <item.icon className={`w-8 h-8 text-${item.color}-600`} />
-                </div>
-                <div className="flex items-center justify-between">
+            <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white overflow-hidden group relative">
+              <div 
+                className="absolute top-0 left-0 w-1 h-full opacity-70" 
+                style={{ backgroundColor: item.color }}
+              />
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
                       {item.label}
                     </p>
-                    <p className={`text-2xl font-bold text-gray-800 mt-1`}>
+                    <p className="text-3xl font-black text-gray-900 group-hover:scale-105 transition-transform origin-left">
                       {item.value}
                     </p>
-                    <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
-                        {item.sub}
-                    </p>
+                    <div className="flex items-center gap-1 mt-2">
+                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                         {item.sub}
+                       </span>
+                    </div>
                   </div>
-                  <div className={`p-3 bg-${item.color}-50 rounded-xl group-hover:bg-${item.color}-100 transition-colors`}>
-                    <item.icon className={`w-5 h-5 text-${item.color}-600`} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner" style={{ backgroundColor: `${item.color}15` }}>
+                    <item.icon className="w-6 h-6" style={{ color: item.color }} />
                   </div>
                 </div>
               </CardContent>
@@ -576,28 +586,36 @@ export default function TamuPage() {
 
       {/* Distribusi Bidang */}
       {statBidang.length > 0 && (
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-purple-600" />
-              Bidang yang Sering Dikunjungi
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <Card className="border-none shadow-sm bg-white overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <Building2 className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">
+                  Distribusi Kunjungan
+                </h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Target Bidang Terpopuler</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {statBidang.map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-xs mb-1">
+                <div key={index} className="space-y-3">
+                  <div className="flex justify-between items-end">
                     <span
-                      className="text-gray-600 truncate max-w-[80px]"
+                      className="text-[10px] font-black text-gray-500 uppercase tracking-wider truncate max-w-[100px]"
                       title={item.nama}
                     >
                       {item.nama}
                     </span>
-                    <span className="font-medium">{item.persentase}%</span>
+                    <span className="text-emerald-600 font-black text-xs">{item.persentase}%</span>
                   </div>
-                  <Progress value={item.persentase} className="h-1.5" />
-                  <p className="text-xs text-gray-400 mt-1">
-                    {item.jumlah} kunjungan
-                  </p>
+                  <Progress value={item.persentase} className="h-1.5 bg-emerald-50" />
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-gray-400 font-bold">{item.jumlah} Tamu</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -607,47 +625,53 @@ export default function TamuPage() {
 
       {/* Filter Panel */}
       {showFilters && (
-        <Card className="border border-gray-200 animate-in slide-in-from-top duration-300">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4 flex-1">
-                <div className="relative flex-1 min-w-[250px]">
+        <Card className="border-none shadow-md bg-white animate-in slide-in-from-top-4 duration-300 rounded-2xl overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500 w-full" />
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Cari nama/instansi/bidang..."
-                    className="pl-9 border-gray-200 h-9 text-sm"
+                    placeholder="Search by name, instance, or purpose..."
+                    className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-emerald-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
                 </div>
-                <DatePicker
-                  date={selectedDate}
-                  setDate={setSelectedDate}
-                  placeholder="Filter tanggal"
-                />
-                {selectedDate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedDate(null)}
-                    className="text-red-600 hover:bg-red-50 h-9 px-2"
-                  >
-                    <X className="h-4 w-4 mr-1" /> Reset
-                  </Button>
-                )}
-              </div>
-              {/* Removed duplicate Export button */}
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <DatePicker
+                      date={selectedDate}
+                      setDate={setSelectedDate}
+                      placeholder="Select date"
+                    />
+                    {selectedDate && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedDate(null)}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Info Total Data */}
-      <div className="text-sm text-gray-500">
-        Menampilkan {filteredData.length} dari {total || 0} data
-      </div>
-
-      {/* Virtual Table */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      {/* Table Section */}
+      <div className="bg-white border-none shadow-sm rounded-3xl overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-white">
+           <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
+                 Live Table View
+              </span>
+           </div>
+           <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
+              {filteredData.length} RESULTS
+           </Badge>
+        </div>
         <VirtualTable
           data={filteredData}
           columns={columns}
@@ -664,9 +688,9 @@ export default function TamuPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           className="border-0"
-          rowClassName="hover:bg-green-50/50 transition-colors cursor-pointer"
-          emptyMessage="Tidak ada data tamu"
-          rowHeight={48}
+          rowClassName="hover:bg-emerald-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
+          emptyMessage="No guest data found"
+          rowHeight={56}
         />
       </div>
 
@@ -678,75 +702,118 @@ export default function TamuPage() {
           if (!open) setSelectedTamu(null);
         }}
       >
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-2xl">
-              <Avatar className="w-10 h-10 bg-green-100">
-                <AvatarFallback className="text-green-600">
-                  {selectedTamu?.Nama ? getInitials(selectedTamu.Nama) : "?"}
-                </AvatarFallback>
-              </Avatar>
-              Detail Kunjungan - {selectedTamu?.Nama || "-"}
-            </DialogTitle>
-            <DialogDescription>Informasi lengkap tamu</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="max-w-3xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl">
           {selectedTamu && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-500">Nama</p>
-                  <p className="font-medium">{selectedTamu.Nama || "-"}</p>
+            <div className="flex flex-col">
+              {/* Profile Header */}
+              <div className="bg-gradient-to-br from-emerald-600 to-teal-700 p-8 text-white relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
+                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                  <Avatar className="w-20 h-20 border-4 border-white/20 shadow-xl bg-white/10">
+                    <AvatarFallback className="text-2xl font-black text-white">
+                      {selectedTamu.Nama ? getInitials(selectedTamu.Nama) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center md:text-left">
+                    <DialogTitle asChild>
+                      <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
+                        {selectedTamu.Nama || "Unknown Guest"}
+                      </h2>
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Detail information for guest {selectedTamu.Nama || "Unknown"}
+                    </DialogDescription>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
+                      <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
+                        {selectedTamu.Instansi || "Personal"}
+                      </Badge>
+                      <Badge className="bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
+                        {selectedTamu.Jabatan || "Visitor"}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                  <p className="font-medium">
-                    {selectedTamu["Jenis Kelamin"] || "-"}
-                  </p>
+              </div>
+
+              {/* Content Sections */}
+              <div className="p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Information Groups */}
+                <div className="space-y-6">
+                   <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personal Info</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                          <p className="text-xs font-black text-gray-800">{selectedTamu["Jenis Kelamin"] || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age Range</p>
+                          <p className="text-xs font-black text-gray-800">{selectedTamu["Rentang Usia"] || "-"}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Phone Number</p>
+                        <p className="text-xs font-black text-gray-800 flex items-center gap-2">
+                          <Phone className="w-3 h-3 text-emerald-600" />
+                          {selectedTamu["No HP"] || "-"}
+                        </p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</span>
+                      </div>
+                      <p className="text-xs font-bold text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
+                        {selectedTamu.Alamat || "No address provided"}
+                      </p>
+                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Rentang Usia</p>
-                  <p className="font-medium">
-                    {selectedTamu["Rentang Usia"] || "-"}
-                  </p>
+
+                <div className="space-y-6">
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Purpose of Visit</span>
+                      </div>
+                      <Badge className="bg-purple-50 text-purple-700 border-purple-100 font-bold mb-2">
+                        {selectedTamu["Bidang Dituju"] || "General"}
+                      </Badge>
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[100px]">
+                        <p className="text-xs font-bold text-gray-700 leading-relaxed">
+                          {selectedTamu.Tujuan || "No specific purpose stated"}
+                        </p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Visit Timeline</span>
+                      </div>
+                      <div className="flex items-center gap-3 bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                        <Clock className="w-4 h-4 text-orange-500" />
+                        <div className="text-[10px] font-black text-orange-700 uppercase tracking-tighter">
+                          {selectedTamu.Timestamp || "-"}
+                        </div>
+                      </div>
+                   </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">No HP</p>
-                  <p className="font-medium">
-                    {selectedTamu["No HP"] || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Instansi</p>
-                  <p className="font-medium">
-                    {selectedTamu.Instansi || "-"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Jabatan</p>
-                  <p className="font-medium">{selectedTamu.Jabatan || "-"}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Alamat</p>
-                  <p className="font-medium">{selectedTamu.Alamat || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Bidang Dituju</p>
-                  <p className="font-medium">
-                    {selectedTamu["Bidang Dituju"] || "-"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Tujuan</p>
-                  <p className="font-medium whitespace-pre-wrap">
-                    {selectedTamu.Tujuan || "-"}
-                  </p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm text-gray-500">Waktu Kunjungan</p>
-                  <p className="font-medium">
-                    {selectedTamu.Timestamp || "-"}
-                  </p>
-                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
+                <Button 
+                  onClick={() => setDialogOpen(false)}
+                  variant="ghost" 
+                  className="rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100"
+                >
+                  Close Record
+                </Button>
               </div>
             </div>
           )}

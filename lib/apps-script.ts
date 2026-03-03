@@ -4,19 +4,19 @@
 // ============================================
 // KONFIGURASI URL PER LAYANAN
 // ============================================
-const APPS_SCRIPT_URL_SURVEY = process.env.NEXT_PUBLIC_APPS_SCRIPT_SURVEY;
-const APPS_SCRIPT_URL_ADUAN = process.env.NEXT_PUBLIC_APPS_SCRIPT_ADUAN;
-const APPS_SCRIPT_URL_TAMU = process.env.NEXT_PUBLIC_APPS_SCRIPT_TAMU;
+// process.env.NEXT_PUBLIC_APPS_SCRIPT_SURVEY;
+// process.env.NEXT_PUBLIC_APPS_SCRIPT_ADUAN;
+// process.env.NEXT_PUBLIC_APPS_SCRIPT_TAMU;
 
 // Cache untuk menyimpan data mentah
-let dataCache: {
-  survey: any[];
-  aduan: any[];
-  tamu: any[];
-  timestamp: number;
-} | null = null;
+// let dataCache: {
+//   survey: any[];
+//   aduan: any[];
+//   tamu: any[];
+//   timestamp: number;
+// } | null = null;
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 menit
+// const CACHE_DURATION = 5 * 60 * 1000; // 5 menit
 
 // Deteksi environment
 const isServer = typeof window === "undefined";
@@ -73,7 +73,7 @@ async function fetchFromClient(type = "survey") {
 // ============================================
 // FUNGSI FETCH DENGAN AUTO-DETECT
 // ============================================
-async function fetchFromProxy(type = "survey", forceRefresh = false) {
+async function fetchFromProxy(type = "survey") {
   try {
     const data = isServer
       ? await fetchFromServer(type)
@@ -108,7 +108,7 @@ export async function deleteData(sheetName: string, rowIndex: number) {
     const data = await response.json();
 
     if (data.success) {
-      clearCache();
+      // clearCache();
     }
 
     return data;
@@ -124,12 +124,11 @@ export async function deleteData(sheetName: string, rowIndex: number) {
 export async function getSurveyDataOptimized(
   page = 1,
   limit = 50,
-  forceRefresh = false,
 ) {
   try {
     console.log(`🔍 [SurveyPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    const data = await fetchFromProxy("survey", forceRefresh);
+    const data = await fetchFromProxy("survey");
 
     if (!data || !data.survey) {
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
@@ -205,12 +204,11 @@ export async function getSurveyDataOptimized(
 export async function getAduanDataOptimized(
   page = 1,
   limit = 50,
-  forceRefresh = false,
 ) {
   try {
     console.log(`🔍 [AduanPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    const data = await fetchFromProxy("aduan", forceRefresh);
+    const data = await fetchFromProxy("aduan");
 
     console.log(`🔍 [AduanPage Debug] Raw data from proxy:`, data);
 
@@ -231,7 +229,7 @@ export async function getAduanDataOptimized(
     console.log(`🔍 [AduanPage Debug] Sample item:`, aduanArray[0]);
 
     // Format data sesuai struktur response asli
-    const formatted = aduanArray.map((item: any, index: number) => {
+    const formatted = aduanArray.map((item: any) => {
       return {
         Timestamp: item["Timestamp"] || "",
         Nama: item["Nama"] || "",
@@ -288,12 +286,11 @@ export async function getAduanDataOptimized(
 export async function getTamuDataOptimized(
   page = 1,
   limit = 50,
-  forceRefresh = false,
 ) {
   try {
     console.log(`🔍 [TamuPage Debug] Fetching page ${page}, limit ${limit}`);
 
-    const data = await fetchFromProxy("tamu", forceRefresh);
+    const data = await fetchFromProxy("tamu");
 
     console.log(`🔍 [TamuPage Debug] Raw data from proxy:`, data);
 
@@ -377,7 +374,7 @@ export async function getTamuData() {
 }
 
 export async function getSurveyDataPaginated(page = 1, limit = 50) {
-  const result = await getSurveyDataOptimized(page, limit, true);
+  const result = await getSurveyDataOptimized(page, limit);
   return {
     data: result.data,
     total: result.total,
@@ -388,7 +385,7 @@ export async function getSurveyDataPaginated(page = 1, limit = 50) {
 }
 
 export async function getAduanDataPaginated(page = 1, limit = 50) {
-  const result = await getAduanDataOptimized(page, limit, true);
+  const result = await getAduanDataOptimized(page, limit);
   return {
     data: result.data,
     total: result.total,
@@ -399,7 +396,7 @@ export async function getAduanDataPaginated(page = 1, limit = 50) {
 }
 
 export async function getTamuDataPaginated(page = 1, limit = 50) {
-  const result = await getTamuDataOptimized(page, limit, true);
+  const result = await getTamuDataOptimized(page, limit);
   return {
     data: result.data,
     total: result.total,
@@ -413,7 +410,7 @@ export async function getTamuDataPaginated(page = 1, limit = 50) {
 // FUNGSI CLEAR CACHE
 // ============================================
 export function clearCache() {
-  dataCache = null;
+  // dataCache = null;
 }
 
 // ============================================
@@ -427,11 +424,34 @@ export async function getStatistik() {
       fetchFromProxy("tamu"),
     ]);
 
+    const surveyData = survey?.survey || [];
+    
+    // Hitung rata-rata kepuasan
+    let totalScore = 0;
+    let validSurveys = 0;
+
+    surveyData.forEach((item: any) => {
+      const satisfaction = item["Kepuasan"] || "";
+      let score = 0;
+      if (satisfaction.includes("Sangat Puas")) score = 5;
+      else if (satisfaction.includes("Puas")) score = 4;
+      else if (satisfaction.includes("Cukup")) score = 3;
+      else if (satisfaction.includes("Kurang")) score = 2;
+      else if (satisfaction.includes("Tidak")) score = 1;
+
+      if (score > 0) {
+        totalScore += score;
+        validSurveys++;
+      }
+    });
+
+    const rataKepuasan = validSurveys > 0 ? (totalScore / validSurveys).toFixed(1) : "0.0";
+
     return {
-      totalSurvey: survey?.survey?.length || 0,
+      totalSurvey: surveyData.length,
       totalAduan: aduan?.aduan?.length || 0,
       totalTamu: tamu?.tamu?.length || 0,
-      rataKepuasan: "0.0", // Sementara
+      rataKepuasan,
     };
   } catch (error) {
     console.error("❌ Error getStatistik:", error);

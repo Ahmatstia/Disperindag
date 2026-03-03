@@ -272,9 +272,9 @@ export default function Home() {
             aria-label="Buka menu"
             style={{ background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", flexDirection: "column", gap: 4.5, alignItems: "flex-end", minWidth: 44, minHeight: 44, justifyContent: "center" }}
           >
-            <span style={{ width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
-            <span style={{ width: 15, height: 2, background: C.gold, borderRadius: 2 }} />
-            <span style={{ width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 15, height: 2, background: C.gold, borderRadius: 2 }} />
+            <span style={{ display: "block", width: 22, height: 2, background: "#fff", borderRadius: 2 }} />
           </button>
         </div>
       </motion.nav>
@@ -289,7 +289,9 @@ export default function Home() {
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.875rem 1.25rem", borderBottom: `1px solid ${C.borderSub}`, flexShrink: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${C.gold}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Mono', monospace", fontSize: 7.5, color: C.gold, fontWeight: 700 }}>DPRD</div>
+                <div style={{ width: 38, height: 38, position: "relative", flexShrink: 0 }}>
+                  <Image src="/logo.jpg" alt="Logo DISPERINDAG" fill className="object-contain" />
+                </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>DISPERINDAG</div>
                   <div style={{ fontSize: 9, color: C.goldLight, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.75 }}>Sumatera Barat</div>
@@ -348,7 +350,7 @@ export default function Home() {
       >
         {/* Background image parallax */}
         <motion.div style={{ position: "absolute", inset: 0, y: heroBgY }}>
-          <Image src="/home.png" alt="Kota Padang" fill priority className="object-cover object-center" style={{ opacity: 0.14 }} />
+          <Image src="/home1.png" alt="Kota Padang" fill priority className="object-cover object-center" style={{ opacity: 0.14 }} />
         </motion.div>
 
         <HeroGrid />
@@ -655,7 +657,9 @@ export default function Home() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: "2.25rem", paddingBottom: "2.25rem", borderBottom: `1px solid ${C.borderSub}` }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "0.875rem" }}>
-                <div style={{ width: 34, height: 34, borderRadius: "50%", border: `1.5px solid ${C.gold}`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Space Mono', monospace", fontSize: 7.5, color: C.gold, fontWeight: 700 }}>DPRD</div>
+                <div style={{ width: 38, height: 38, position: "relative", flexShrink: 0 }}>
+                  <Image src="/logo.jpg" alt="Logo DISPERINDAG" fill className="object-contain" />
+                </div>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>DISPERINDAG SUMBAR</span>
               </div>
               <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.38)", lineHeight: 1.7, fontWeight: 300 }}>Portal Layanan Publik Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat.</p>

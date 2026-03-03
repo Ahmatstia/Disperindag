@@ -18,17 +18,16 @@ import {
   ChevronRight,
   Search,
   X,
-  BarChart3,
   Users,
   Building2,
+  Phone,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -52,7 +51,6 @@ import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import debounce from "lodash/debounce";
 import Link from "next/link";
-import { Progress } from "@/components/ui/progress";
 
 interface AduanItem {
   Timestamp: string;
@@ -66,6 +64,7 @@ interface AduanItem {
   "Tanggal Kejadian": string;
   "Tindak Lanjut": string;
   Status?: string;
+  [key: string]: string | undefined;
 }
 
 export default function AduanPage() {
@@ -95,7 +94,7 @@ export default function AduanPage() {
     loadMore,
     refresh,
     removeItem: removeLocalItem,
-  } = useInfiniteData({
+  } = useInfiniteData<AduanItem>({
     fetchFn: (page, limit) => getAduanDataOptimized(page, limit),
     initialLimit: 50,
     enabled: true,
@@ -124,8 +123,8 @@ export default function AduanPage() {
 
     if (sortBy) {
       filtered.sort((a, b) => {
-        let valA = a[sortBy as keyof AduanItem] || "";
-        let valB = b[sortBy as keyof AduanItem] || "";
+        let valA: string | number = a[sortBy as keyof AduanItem] || "";
+        let valB: string | number = b[sortBy as keyof AduanItem] || "";
 
         if (sortBy === "Timestamp") {
           valA = new Date(valA).getTime();
@@ -302,7 +301,7 @@ export default function AduanPage() {
           variant="outline"
           className={`text-[10px] px-1 py-0 ${
             item["Jenis Kelamin"] === "Laki-laki"
-              ? "bg-blue-50 text-blue-700 border-blue-200"
+              ? "bg-[#c9973a]/10 text-[#c9973a] border-[#c9973a]/30"
               : "bg-pink-50 text-pink-700 border-pink-200"
           }`}
         >
@@ -355,129 +354,18 @@ export default function AduanPage() {
       header: "",
       width: 40,
       render: (item: AduanItem) => (
-        <Dialog
-          open={dialogOpen && selectedAduan === item}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) setSelectedAduan(null);
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedAduan(item);
+            setDialogOpen(true);
           }}
+          className="hover:bg-rose-100 h-6 w-6 p-0"
         >
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedAduan(item);
-              }}
-              className="hover:bg-red-100 h-6 w-6 p-0"
-            >
-              <Eye className="h-3 w-3 text-red-600" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-2xl">
-                <Avatar className="w-10 h-10 bg-red-100">
-                  <AvatarFallback className="text-red-600">
-                    {getInitials(item.Nama)}
-                  </AvatarFallback>
-                </Avatar>
-                Detail Aduan - {item.Nama}
-              </DialogTitle>
-              <DialogDescription>
-                Informasi lengkap aduan masyarakat
-              </DialogDescription>
-            </DialogHeader>
-            {selectedAduan && (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <User className="w-4 h-4" /> Identitas Pelapor
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-500">Nama</p>
-                      <p className="font-medium">{selectedAduan.Nama}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Pekerjaan</p>
-                      <p className="font-medium">{selectedAduan.Pekerjaan}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Instansi</p>
-                      <p className="font-medium">{selectedAduan.Instansi}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                      <p className="font-medium">
-                        {selectedAduan["Jenis Kelamin"]}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Rentang Usia</p>
-                      <p className="font-medium">
-                        {selectedAduan["Rentang Usia"]}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Timestamp</p>
-                      <p className="font-medium">{selectedAduan.Timestamp}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" /> Detail Aduan
-                  </h3>
-                  <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Hal/Peristiwa
-                      </p>
-                      <div className="bg-white p-3 rounded border text-sm">
-                        {selectedAduan["Hal Peristiwa"]}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Lokasi Peristiwa
-                        </p>
-                        <div className="bg-white p-2 rounded border flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm">
-                            {selectedAduan["Lokasi Peristiwa"]}
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Tanggal Kejadian
-                        </p>
-                        <div className="bg-white p-2 rounded border flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm">
-                            {selectedAduan["Tanggal Kejadian"]}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">
-                        Tindak Lanjut yang Diharapkan
-                      </p>
-                      <div className="bg-white p-3 rounded border text-sm">
-                        {selectedAduan["Tindak Lanjut"]}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
+          <Eye className="h-3 w-3 text-rose-600" />
+        </Button>
       ),
     },
     {
@@ -518,163 +406,155 @@ export default function AduanPage() {
         <span className="font-medium text-gray-700">Data Aduan</span>
       </div>
 
-      {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-rose-700 to-pink-800 p-8 rounded-3xl shadow-xl shadow-rose-100">
+        {/* Dekorasi Cahaya */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/10 rounded-full blur-3xl -ml-10 -mb-10" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Data Layanan Aduan
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className="bg-rose-400/20 text-rose-100 hover:bg-rose-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
+                Monitoring System
+              </Badge>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
+              DATA LAYANAN <span className="text-rose-200">ADUAN</span>
             </h1>
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-red-500" />
-              Total {total} aduan telah masuk
+            <p className="text-rose-100/60 text-xs font-medium mt-1 flex items-center gap-2">
+              <AlertCircle className="w-3 h-3" />
+              Monitoring {total || 0} aduan masuk untuk respon cepat & efisien
             </p>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex flex-wrap gap-2">
             <Button
               onClick={refresh}
               variant="outline"
-              className="gap-2 border-gray-200 hover:bg-red-50 hover:text-red-600"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2"
             >
-              <RefreshCw className="h-4 w-4" /> Refresh
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> 
+              Refresh
             </Button>
             <Button
               variant="outline"
-              className="gap-2 border-gray-200 hover:bg-red-50 hover:text-red-600"
+              size="sm"
+              className={cn(
+                "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2",
+                showFilters && "bg-white/30 border-white/40"
+              )}
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
+              Filter
+            </Button>
+            <Button
+              onClick={exportToExcel}
+              size="sm"
+              className="bg-rose-500 hover:bg-rose-400 text-white border-none shadow-lg shadow-rose-900/20 gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Excel
             </Button>
           </div>
         </div>
       </div>
 
       {/* Statistik Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Aduan</p>
-                <p className="text-xl font-bold text-red-600 mt-1">
-                  {stat.total}
-                </p>
-              </div>
-              <div className="p-2 bg-red-50 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Aduan Baru</p>
-                <p className="text-xl font-bold text-yellow-600 mt-1">
-                  {stat.baru}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.baru / (stat.total || 1)) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-yellow-50 rounded-lg">
-                <Clock className="w-4 h-4 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Diproses</p>
-                <p className="text-xl font-bold text-blue-600 mt-1">
-                  {stat.diproses}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.diproses / (stat.total || 1)) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <User className="w-4 h-4 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Selesai</p>
-                <p className="text-xl font-bold text-green-600 mt-1">
-                  {stat.selesai}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.selesai / (stat.total || 1)) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-green-50 rounded-lg">
-                <Users className="w-4 h-4 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+            { label: "Total Aduan", value: stat.total, icon: AlertCircle, color: "#f43f5e", sub: "Aduan masuk" },
+            { label: "Aduan Baru", value: stat.baru, icon: Clock, color: "#eab308", sub: `${Math.round((stat.baru / (stat.total || 1)) * 100)}% dari total` },
+            { label: "Diproses", value: stat.diproses, icon: User, color: "#c9973a", sub: `${Math.round((stat.diproses / (stat.total || 1)) * 100)}% dari total` },
+            { label: "Selesai", value: stat.selesai, icon: Users, color: "#10b981", sub: `${Math.round((stat.selesai / (stat.total || 1)) * 100)}% dari total` }
+        ].map((item, idx) => (
+            <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white overflow-hidden group relative">
+              <div 
+                className="absolute top-0 left-0 w-1 h-full opacity-70" 
+                style={{ backgroundColor: item.color }}
+              />
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
+                      {item.label}
+                    </p>
+                    <p className="text-3xl font-black text-gray-900 group-hover:scale-105 transition-transform origin-left">
+                      {item.value}
+                    </p>
+                    <div className="flex items-center gap-1 mt-2">
+                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                         {item.sub}
+                       </span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner" style={{ backgroundColor: `${item.color}15` }}>
+                    <item.icon className="w-6 h-6" style={{ color: item.color }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        ))}
       </div>
 
       {/* Filter Panel */}
       {showFilters && (
-        <Card className="border border-gray-200 animate-in slide-in-from-top duration-300">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4 flex-1">
-                <div className="relative flex-1 min-w-[250px]">
+        <Card className="border-none shadow-md bg-white animate-in slide-in-from-top-4 duration-300 rounded-2xl overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-rose-500 to-pink-500 w-full" />
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Cari nama/instansi/aduan..."
-                    className="pl-9 border-gray-200 h-9 text-sm"
+                    placeholder="Search name, instance, or report details..."
+                    className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-rose-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
                 </div>
-                <DatePicker
-                  date={selectedDate}
-                  setDate={setSelectedDate}
-                  placeholder="Filter tanggal"
-                />
-                {selectedDate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedDate(null)}
-                    className="text-red-600 hover:bg-red-50 h-9 px-2"
-                  >
-                    <X className="h-4 w-4 mr-1" /> Reset
-                  </Button>
-                )}
-              </div>
-              <Button
-                onClick={exportToExcel}
-                className="bg-green-600 hover:bg-green-700 text-white gap-2 h-9"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <DatePicker
+                      date={selectedDate}
+                      setDate={setSelectedDate}
+                      placeholder="Select date"
+                    />
+                    {selectedDate && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedDate(null)}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button
+                      onClick={exportToExcel}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2 h-11 rounded-xl shadow-lg shadow-emerald-900/10 border-none px-6"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export Excel
+                    </Button>
+                </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Info Total Data */}
-      <div className="text-sm text-gray-500">
-        Menampilkan {filteredData.length} dari {total} data
-      </div>
-
-      {/* Virtual Table */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      {/* Table Section */}
+      <div className="bg-white border-none shadow-sm rounded-3xl overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-white">
+           <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-rose-500" />
+              <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
+                 Complaints Register
+              </span>
+           </div>
+           <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
+              {filteredData.length} RESULTS
+           </Badge>
+        </div>
         <VirtualTable
           data={filteredData}
           columns={columns}
@@ -691,11 +571,146 @@ export default function AduanPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           className="border-0"
-          rowClassName="hover:bg-red-50/50 transition-colors cursor-pointer"
-          emptyMessage="Tidak ada data aduan"
-          rowHeight={48}
+          rowClassName="hover:bg-rose-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
+          emptyMessage="No complaint records found"
+          rowHeight={56}
         />
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setSelectedAduan(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl">
+          {selectedAduan && (
+            <div className="flex flex-col">
+              {/* Profile Header */}
+              <div className="bg-gradient-to-br from-rose-600 to-pink-700 p-8 text-white relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
+                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                  <Avatar className="w-20 h-20 border-4 border-white/20 shadow-xl bg-white/10">
+                    <AvatarFallback className="text-2xl font-black text-white">
+                      {selectedAduan.Nama ? getInitials(selectedAduan.Nama) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center md:text-left">
+                    <DialogTitle asChild>
+                      <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
+                        {selectedAduan.Nama || "Anonymous Reporter"}
+                      </h2>
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Detail complaint from {selectedAduan.Nama || "Unknown"}
+                    </DialogDescription>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
+                      <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
+                        {selectedAduan.Instansi || "Personal"}
+                      </Badge>
+                      <Badge className={cn(
+                        "border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5 shadow-sm",
+                        selectedAduan.Status === "Selesai" ? "bg-emerald-400 text-emerald-950" : 
+                        selectedAduan.Status === "Sedang Diproses" ? "bg-amber-400 text-amber-950" : 
+                        "bg-rose-400 text-rose-950"
+                      )}>
+                        {selectedAduan.Status?.toUpperCase() || "PENDING"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Sections */}
+              <div className="p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Information Groups */}
+                <div className="space-y-6">
+                   <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reporter Info</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Profession</p>
+                          <p className="text-xs font-black text-gray-800">{selectedAduan.Pekerjaan || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                          <p className="text-xs font-black text-gray-800">{selectedAduan["Jenis Kelamin"] || "-"}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Phone Number</p>
+                        <p className="text-xs font-black text-gray-800 flex items-center gap-2">
+                          <Phone className="w-3 h-3 text-rose-600" />
+                          {selectedAduan["No HP"] || "-"}
+                        </p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</span>
+                      </div>
+                      <p className="text-xs font-bold text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
+                        {selectedAduan.Alamat || "No address provided"}
+                      </p>
+                   </div>
+                </div>
+
+                <div className="space-y-6">
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Complaint Details</span>
+                      </div>
+                      <div className="bg-rose-50/30 p-4 rounded-xl border border-rose-100 min-h-[120px]">
+                        <p className="text-xs font-bold text-gray-700 leading-relaxed">
+                          {selectedAduan["Hal Peristiwa"] || "No specific details provided"}
+                        </p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Timeline</span>
+                      </div>
+                      <div className="flex items-center gap-3 bg-orange-50/50 p-3 rounded-xl border border-orange-100">
+                        <Clock className="w-4 h-4 text-orange-500" />
+                        <div className="text-[10px] font-black text-orange-700 uppercase tracking-tighter">
+                          {selectedAduan.Timestamp || "-"}
+                        </div>
+                      </div>
+                   </div>
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end gap-3">
+                <Button 
+                  onClick={() => setDialogOpen(false)}
+                  variant="ghost" 
+                  className="rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100"
+                >
+                  Close Record
+                </Button>
+                {selectedAduan.Status !== "Selesai" && (
+                   <Button 
+                     className="rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-500 text-white border-none"
+                   >
+                     Mark as Resolved
+                   </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

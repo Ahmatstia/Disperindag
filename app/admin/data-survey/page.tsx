@@ -10,7 +10,6 @@ import {
   Trash2,
   Filter,
   Calendar,
-  Users,
   Star,
   TrendingUp,
   AlertCircle,
@@ -21,13 +20,12 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -75,7 +73,7 @@ interface SurveyItem {
   Kerapian: string;
   "Keberadaan Pengaduan": string;
   "Tata Cara Pengaduan": string;
-  "Tata Cara Pengaduan (2)": string; // Tambahkan ini
+  "Tata Cara Pengaduan (2)": string;
   "Pengaduan Online": string;
   Keberlanjutan: string;
   "Sarana Kelengkapan": string;
@@ -86,6 +84,7 @@ interface SurveyItem {
   "Ketersediaan Informasi": string;
   "Kemanfaatan Online": string;
   Kepuasan: string;
+  [key: string]: string | undefined;
 }
 
 export default function SurveyPage() {
@@ -115,7 +114,7 @@ export default function SurveyPage() {
     loadMore,
     refresh,
     removeItem: removeLocalItem,
-  } = useInfiniteData({
+  } = useInfiniteData<SurveyItem>({
     fetchFn: (page, limit) => getSurveyDataOptimized(page, limit),
     initialLimit: 50,
     enabled: true,
@@ -142,8 +141,8 @@ export default function SurveyPage() {
 
     if (sortBy) {
       filtered.sort((a, b) => {
-        let valA = a[sortBy as keyof SurveyItem] || "";
-        let valB = b[sortBy as keyof SurveyItem] || "";
+        let valA: string | number = a[sortBy as keyof SurveyItem] || "";
+        let valB: string | number = b[sortBy as keyof SurveyItem] || "";
 
         if (sortBy === "Timestamp") {
           valA = new Date(valA).getTime();
@@ -227,7 +226,7 @@ export default function SurveyPage() {
         title: "Berhasil",
         description: `Data berhasil diexport (${filteredData.length} baris)`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Gagal",
         description: "Gagal mengexport data",
@@ -281,14 +280,14 @@ export default function SurveyPage() {
       key: "no",
       header: "No",
       width: 50,
-      render: (_: any, index: number) => index + 1,
+      render: (_: SurveyItem, index: number) => index + 1,
     },
     {
       key: "timestamp",
       header: "Tanggal",
       width: 90,
       sortable: true,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
           <span className="text-xs">
@@ -306,10 +305,10 @@ export default function SurveyPage() {
       header: "Nama",
       width: 120,
       sortable: true,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <div className="flex items-center gap-2">
           <Avatar className="w-6 h-6 bg-blue-100 shrink-0">
-            <AvatarFallback className="text-blue-600 text-xs">
+            <AvatarFallback className="text-[#c9973a] text-xs">
               {getInitials(item.Nama)}
             </AvatarFallback>
           </Avatar>
@@ -324,7 +323,7 @@ export default function SurveyPage() {
       header: "Pekerjaan",
       width: 100,
       sortable: true,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <span className="text-xs truncate" title={item.Pekerjaan}>
           {item.Pekerjaan || "-"}
         </span>
@@ -334,12 +333,12 @@ export default function SurveyPage() {
       key: "jk",
       header: "JK",
       width: 40,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <Badge
           variant="outline"
           className={`text-[10px] px-1 py-0 ${
             item["Jenis Kelamin"] === "Laki-laki"
-              ? "bg-blue-50 text-blue-700 border-blue-200"
+              ? "bg-[#c9973a]/10 text-blue-700 border-blue-200"
               : "bg-pink-50 text-pink-700 border-pink-200"
           }`}
         >
@@ -351,7 +350,7 @@ export default function SurveyPage() {
       key: "usia",
       header: "Usia",
       width: 60,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <span className="text-xs">{item["Rentang Usia"] || "-"}</span>
       ),
     },
@@ -359,7 +358,7 @@ export default function SurveyPage() {
       key: "layanan",
       header: "Layanan",
       width: 100,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <Badge
           variant="outline"
           className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-1 py-0 truncate max-w-[90px]"
@@ -373,7 +372,7 @@ export default function SurveyPage() {
       key: "kepuasan",
       header: "Kepuasan",
       width: 90,
-      render: (item: any) => (
+      render: (item: SurveyItem) => (
         <Badge
           className={`${getBadgeColor(item.Kepuasan)} text-[10px] px-1 py-0`}
         >
@@ -385,238 +384,26 @@ export default function SurveyPage() {
       key: "detail",
       header: "",
       width: 40,
-      render: (item: any) => (
-        <Dialog
-          open={dialogOpen && selectedSurvey === item}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) setSelectedSurvey(null);
+      render: (item: SurveyItem) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedSurvey(item);
+            setDialogOpen(true);
           }}
+          className="hover:bg-indigo-100 h-6 w-6 p-0"
         >
-          <DialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedSurvey(item);
-              }}
-              className="hover:bg-blue-100 h-6 w-6 p-0"
-            >
-              <Eye className="h-3 w-3 text-blue-600" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-2xl">
-                <Avatar className="w-10 h-10 bg-blue-100">
-                  <AvatarFallback className="text-blue-600">
-                    {getInitials(item.Nama)}
-                  </AvatarFallback>
-                </Avatar>
-                Detail Survey - {item.Nama}
-              </DialogTitle>
-              <DialogDescription>
-                Informasi lengkap survey kepuasan
-              </DialogDescription>
-            </DialogHeader>
-            {selectedSurvey && (
-              <Tabs defaultValue="identitas" className="w-full">
-                <TabsList className="grid grid-cols-5 mb-4">
-                  <TabsTrigger value="identitas">Identitas</TabsTrigger>
-                  <TabsTrigger value="layanan">Layanan</TabsTrigger>
-                  <TabsTrigger value="petugas">Petugas</TabsTrigger>
-                  <TabsTrigger value="pengaduan">Pengaduan</TabsTrigger>
-                  <TabsTrigger value="sarana">Sarana</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="identitas" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Timestamp</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey.Timestamp}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Nama</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey.Nama}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Pekerjaan</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey.Pekerjaan}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey["Jenis Kelamin"]}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Rentang Usia</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey["Rentang Usia"]}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-500">Layanan</p>
-                      <p className="font-medium bg-gray-50 p-2 rounded">
-                        {selectedSurvey.Layanan}
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="layanan" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      {
-                        label: "Persyaratan",
-                        value: selectedSurvey.Persyaratan,
-                      },
-                      { label: "Prosedur", value: selectedSurvey.Prosedur },
-                      {
-                        label: "Waktu Proses Berkas",
-                        value: selectedSurvey["Waktu Proses Berkas"],
-                      },
-                      {
-                        label: "Waktu Selesai Aduan",
-                        value: selectedSurvey["Waktu Selesai Aduan"],
-                      },
-                      {
-                        label: "Waktu Aduan Online",
-                        value: selectedSurvey["Waktu Aduan Online"],
-                      },
-                      {
-                        label: "Waktu Respon Online",
-                        value: selectedSurvey["Waktu Respon Online"],
-                      },
-                      { label: "Biaya", value: selectedSurvey.Biaya },
-                      {
-                        label: "Kesesuaian Hasil",
-                        value: selectedSurvey.Kesesuaian,
-                      },
-                    ].map((field, idx) => (
-                      <div key={idx} className="space-y-1">
-                        <p className="text-sm text-gray-500">{field.label}</p>
-                        <Badge className={getBadgeColor(field.value)}>
-                          {field.value || "-"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="petugas" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: "Penguasaan", value: selectedSurvey.Penguasaan },
-                      { label: "Komunikasi", value: selectedSurvey.Komunikasi },
-                      {
-                        label: "Komunikasi Online",
-                        value: selectedSurvey["Komunikasi Online"],
-                      },
-                      { label: "Sikap", value: selectedSurvey.Sikap },
-                      { label: "Kerapian", value: selectedSurvey.Kerapian },
-                    ].map((field, idx) => (
-                      <div key={idx} className="space-y-1">
-                        <p className="text-sm text-gray-500">{field.label}</p>
-                        <Badge className={getBadgeColor(field.value)}>
-                          {field.value || "-"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="pengaduan" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      {
-                        label: "Keberadaan Pengaduan",
-                        value: selectedSurvey["Keberadaan Pengaduan"],
-                      },
-                      {
-                        label: "Tata Cara Pengaduan",
-                        value: selectedSurvey["Tata Cara Pengaduan"],
-                      },
-                      {
-                        label: "Tata Cara Pengaduan (2)", // ✅ Sekarang 5 item
-                        value: selectedSurvey["Tata Cara Pengaduan (2)"],
-                      },
-                      {
-                        label: "Pengaduan Online",
-                        value: selectedSurvey["Pengaduan Online"],
-                      },
-                      {
-                        label: "Keberlanjutan",
-                        value: selectedSurvey.Keberlanjutan,
-                      },
-                    ].map((field, idx) => (
-                      <div key={idx} className="space-y-1">
-                        <p className="text-sm text-gray-500">{field.label}</p>
-                        <Badge className={getBadgeColor(field.value)}>
-                          {field.value || "-"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="sarana" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      {
-                        label: "Kelengkapan Sarana",
-                        value: selectedSurvey["Sarana Kelengkapan"],
-                      },
-                      {
-                        label: "Kelayakan Sarana",
-                        value: selectedSurvey["Sarana Kelayakan"],
-                      },
-                      {
-                        label: "Sarana Toilet",
-                        value: selectedSurvey["Sarana Toilet"],
-                      },
-                      { label: "Kebersihan", value: selectedSurvey.Kebersihan },
-                      {
-                        label: "Front Officer",
-                        value: selectedSurvey["Front Officer"],
-                      },
-                      {
-                        label: "Ketersediaan Info",
-                        value: selectedSurvey["Ketersediaan Informasi"],
-                      },
-                      {
-                        label: "Kemanfaatan Online",
-                        value: selectedSurvey["Kemanfaatan Online"],
-                      },
-                      { label: "Kepuasan", value: selectedSurvey.Kepuasan },
-                    ].map((field, idx) => (
-                      <div key={idx} className="space-y-1">
-                        <p className="text-sm text-gray-500">{field.label}</p>
-                        <Badge className={getBadgeColor(field.value)}>
-                          {field.value || "-"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            )}
-          </DialogContent>
-        </Dialog>
+          <Eye className="h-3 w-3 text-indigo-600" />
+        </Button>
       ),
     },
     {
       key: "aksi",
       header: "",
       width: 40,
-      render: (item: any, index: number) => (
+      render: (item: SurveyItem, index: number) => (
         <Button
           variant="ghost"
           size="sm"
@@ -636,11 +423,6 @@ export default function SurveyPage() {
     },
   ];
 
-  const totalWidth = columns.reduce(
-    (acc, col) => acc + (col.width as number),
-    0,
-  );
-
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Breadcrumb Navigation */}
@@ -655,187 +437,154 @@ export default function SurveyPage() {
         <span className="font-medium text-gray-700">Data Survey</span>
       </div>
 
-      {/* Header */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-indigo-700 to-blue-800 p-8 rounded-3xl shadow-xl shadow-indigo-100">
+        {/* Dekorasi Cahaya */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-400/10 rounded-full blur-3xl -ml-10 -mb-10" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Data Survey Kepuasan
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className="bg-indigo-400/20 text-indigo-100 hover:bg-indigo-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
+                Analytics System
+              </Badge>
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
+              DATA HASIL <span className="text-indigo-200">SURVEY</span>
             </h1>
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-              <Users className="w-4 h-4 text-blue-500" />
-              Total {total} responden telah mengisi survey
+            <p className="text-indigo-100/60 text-xs font-medium mt-1 flex items-center gap-2">
+              <BarChart3 className="w-3 h-3" />
+              Monitoring {total || 0} responden untuk peningkatan kualitas layanan
             </p>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex flex-wrap gap-2">
             <Button
               onClick={refresh}
               variant="outline"
-              className="gap-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2"
             >
-              <RefreshCw className="h-4 w-4" /> Refresh
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> 
+              Refresh
             </Button>
             <Button
               variant="outline"
-              className="gap-2 border-gray-200 hover:bg-blue-50 hover:text-blue-600"
+              size="sm"
+              className={cn(
+                "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2",
+                showFilters && "bg-white/30 border-white/40"
+              )}
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
+              Filter
+            </Button>
+            <Button
+              onClick={exportToExcel}
+              size="sm"
+              className="bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-900/20 gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export Excel
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Statistik Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Data</p>
-                <p className="text-xl font-bold text-blue-600 mt-1">
-                  {stat.total}
-                </p>
-              </div>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <BarChart3 className="w-4 h-4 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Sangat Puas</p>
-                <p className="text-xl font-bold text-green-600 mt-1">
-                  {stat.sangatPuas}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.sangatPuas / totalKepuasan) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-green-50 rounded-lg">
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Puas</p>
-                <p className="text-xl font-bold text-blue-600 mt-1">
-                  {stat.puas}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.puas / totalKepuasan) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Star className="w-4 h-4 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Cukup</p>
-                <p className="text-xl font-bold text-yellow-600 mt-1">
-                  {stat.cukup}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.cukup / totalKepuasan) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-yellow-50 rounded-lg">
-                <TrendingUp className="w-4 h-4 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Kurang</p>
-                <p className="text-xl font-bold text-red-600 mt-1">
-                  {stat.kurang}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {Math.round((stat.kurang / totalKepuasan) * 100)}%
-                </p>
-              </div>
-              <div className="p-2 bg-red-50 rounded-lg">
-                <AlertCircle className="w-4 h-4 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Statistik Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        {[
+            { label: "Total Responden", value: stat.total, icon: BarChart3, color: "#6366f1", sub: "Total data" },
+            { label: "Sangat Puas", value: stat.sangatPuas, icon: CheckCircle2, color: "#10b981", sub: `${Math.round((stat.sangatPuas / totalKepuasan) * 100)}% dari total` },
+            { label: "Puas", value: stat.puas, icon: Star, color: "#3b82f6", sub: `${Math.round((stat.puas / totalKepuasan) * 100)}% dari total` },
+            { label: "Cukup", value: stat.cukup, icon: TrendingUp, color: "#eab308", sub: `${Math.round((stat.cukup / totalKepuasan) * 100)}% dari total` },
+            { label: "Kurang", value: stat.kurang, icon: AlertCircle, color: "#f43f5e", sub: `${Math.round((stat.kurang / totalKepuasan) * 100)}% dari total` }
+        ].map((item, idx) => (
+            <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-all duration-300 bg-white overflow-hidden group relative">
+              <div 
+                className="absolute top-0 left-0 w-1 h-full opacity-70" 
+                style={{ backgroundColor: item.color }}
+              />
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
+                      {item.label}
+                    </p>
+                    <p className="text-3xl font-black text-gray-900 group-hover:scale-105 transition-transform origin-left">
+                      {item.value}
+                    </p>
+                    <div className="flex items-center gap-1 mt-2">
+                       <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                         {item.sub}
+                       </span>
+                    </div>
+                  </div>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-inner" style={{ backgroundColor: `${item.color}15` }}>
+                    <item.icon className="w-6 h-6" style={{ color: item.color }} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+        ))}
       </div>
 
       {/* Filter Panel */}
       {showFilters && (
-        <Card className="border border-gray-200 animate-in slide-in-from-top duration-300">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-4 items-center justify-between">
-              <div className="flex flex-wrap gap-4 flex-1">
-                <div className="relative flex-1 min-w-[250px]">
+        <Card className="border-none shadow-md bg-white animate-in slide-in-from-top-4 duration-300 rounded-2xl overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-indigo-500 to-blue-500 w-full" />
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Cari nama/pekerjaan/layanan..."
-                    className="pl-9 border-gray-200 h-9 text-sm"
+                    placeholder="Search name, job, or service type..."
+                    className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-indigo-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
                 </div>
-                <DatePicker
-                  date={selectedDate}
-                  setDate={setSelectedDate}
-                  placeholder="Filter tanggal"
-                />
-                {selectedDate && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedDate(null)}
-                    className="text-red-600 hover:bg-red-50 h-9 px-2"
-                  >
-                    <X className="h-4 w-4 mr-1" /> Reset
-                  </Button>
-                )}
-              </div>
-              <Button
-                onClick={exportToExcel}
-                className="bg-green-600 hover:bg-green-700 text-white gap-2 h-9"
-              >
-                <Download className="h-4 w-4" />
-                Export Excel
-              </Button>
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <DatePicker
+                      date={selectedDate}
+                      setDate={setSelectedDate}
+                      placeholder="Select date"
+                    />
+                    {selectedDate && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedDate(null)}
+                        className="text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Info Total Data */}
-      <div className="text-sm text-gray-500">
-        Menampilkan {filteredData.length} dari {total} data
-      </div>
-
-      {/* Virtual Table */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+      {/* Table Section */}
+      <div className="bg-white border-none shadow-sm rounded-3xl overflow-hidden">
+        <div className="p-6 border-b border-gray-50 flex justify-between items-center bg-white">
+           <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-indigo-500" />
+              <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
+                 Survey Results Database
+              </span>
+           </div>
+           <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
+              {filteredData.length} RESPONSES
+           </Badge>
+        </div>
         <VirtualTable
           data={filteredData}
           columns={columns}
           onRowClick={(item) => {
-            setSelectedSurvey(item);
+            setSelectedSurvey(item as unknown as SurveyItem);
             setDialogOpen(true);
           }}
           initialLoading={initialLoading}
@@ -847,11 +596,228 @@ export default function SurveyPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           className="border-0"
-          rowClassName="hover:bg-blue-50/50 transition-colors cursor-pointer"
-          emptyMessage="Tidak ada data survey"
-          rowHeight={48}
+          rowClassName="hover:bg-indigo-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
+          emptyMessage="No survey records found"
+          rowHeight={56}
         />
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setSelectedSurvey(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl">
+          {selectedSurvey && (
+            <div className="flex flex-col">
+              {/* Profile Header */}
+              <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 text-white relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
+                <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                  <Avatar className="w-20 h-20 border-4 border-white/20 shadow-xl bg-white/10">
+                    <AvatarFallback className="text-2xl font-black text-white">
+                      {selectedSurvey.Nama ? getInitials(selectedSurvey.Nama) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center md:text-left">
+                    <DialogTitle asChild>
+                      <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
+                        {selectedSurvey.Nama || "Anonymous Respondent"}
+                      </h2>
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Survey response details for {selectedSurvey.Nama || "Anonymous"}
+                    </DialogDescription>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
+                      <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
+                        {selectedSurvey.Pekerjaan || "General"}
+                      </Badge>
+                      <Badge className={cn(
+                        "border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5 shadow-sm",
+                        getBadgeColor(selectedSurvey.Kepuasan)
+                      )}>
+                        {selectedSurvey.Kepuasan?.toUpperCase() || "PENDING"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabs Content */}
+              <div className="p-0 bg-white min-h-[400px]">
+                <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
+                   <div className="px-8 pt-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                      <TabsList className="bg-transparent gap-6 h-12">
+                        {["overview", "layanan", "petugas", "pengaduan", "sarana"].map((tab) => (
+                          <TabsTrigger 
+                            key={tab}
+                            value={tab} 
+                            className="bg-transparent border-none shadow-none text-[10px] font-black uppercase tracking-widest text-gray-400 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent relative h-full rounded-none px-0"
+                          >
+                            {tab}
+                            <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 scale-x-0 data-[state=active]:scale-x-100 transition-transform" />
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                         <Calendar className="w-3 h-3" />
+                         {selectedSurvey.Timestamp}
+                      </div>
+                   </div>
+
+                   <div className="p-8">
+                      <TabsContent value="overview" className="mt-0">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profile Details</span>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                                      <p className="text-xs font-black text-gray-800">{selectedSurvey["Jenis Kelamin"] || "-"}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age Range</p>
+                                      <p className="text-xs font-black text-gray-800">{selectedSurvey["Rentang Usia"] || "-"}</p>
+                                    </div>
+                                  </div>
+                               </div>
+                               <div className="space-y-4">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Service</span>
+                                  </div>
+                                  <p className="text-sm font-black text-indigo-700 bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
+                                    {selectedSurvey.Layanan}
+                                  </p>
+                               </div>
+                            </div>
+                            
+                            <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100 space-y-4">
+                               <div className="flex items-center gap-2">
+                                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                  <span className="text-xs font-black text-gray-800 uppercase tracking-widest">Global Satisfaction</span>
+                               </div>
+                               <div className="pt-4 text-center">
+                                  <div className={cn(
+                                    "inline-block px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg",
+                                    getBadgeColor(selectedSurvey.Kepuasan)
+                                  )}>
+                                     {selectedSurvey.Kepuasan}
+                                  </div>
+                                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 leading-relaxed">
+                                     Respondent reflects a general feeling of <br/> 
+                                     <span className="text-indigo-600">&quot;{selectedSurvey.Kepuasan}&quot;</span> regarding Disperindag services.
+                                  </p>
+                               </div>
+                            </div>
+                         </div>
+                      </TabsContent>
+
+                      <TabsContent value="layanan" className="mt-0">
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                               { label: "Persyaratan", value: selectedSurvey.Persyaratan },
+                               { label: "Prosedur", value: selectedSurvey.Prosedur },
+                               { label: "Proses Berkas", value: selectedSurvey["Waktu Proses Berkas"] },
+                               { label: "Selesai Aduan", value: selectedSurvey["Waktu Selesai Aduan"] },
+                               { label: "Aduan Online", value: selectedSurvey["Waktu Aduan Online"] },
+                               { label: "Respon Online", value: selectedSurvey["Waktu Respon Online"] },
+                               { label: "Biaya", value: selectedSurvey.Biaya },
+                               { label: "Kesesuaian", value: selectedSurvey.Kesesuaian },
+                            ].map((item, i) => (
+                              <div key={i} className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{item.label}</p>
+                                <div className={cn("text-[10px] font-black px-2 py-0.5 rounded-full inline-block", getBadgeColor(item.value))}>
+                                  {item.value}
+                                </div>
+                              </div>
+                            ))}
+                         </div>
+                      </TabsContent>
+
+                      <TabsContent value="petugas" className="mt-0">
+                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {[
+                               { label: "Penguasaan", value: selectedSurvey.Penguasaan },
+                               { label: "Komunikasi", value: selectedSurvey.Komunikasi },
+                               { label: "Komunikasi Online", value: selectedSurvey["Komunikasi Online"] },
+                               { label: "Sikap", value: selectedSurvey.Sikap },
+                               { label: "Kerapian", value: selectedSurvey.Kerapian },
+                            ].map((item, i) => (
+                              <div key={i} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">{item.label}</p>
+                                <div className={cn("text-xs font-black px-4 py-1.5 rounded-xl shadow-sm", getBadgeColor(item.value))}>
+                                  {item.value}
+                                </div>
+                              </div>
+                            ))}
+                         </div>
+                      </TabsContent>
+
+                      <TabsContent value="pengaduan" className="mt-0">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                               { label: "Keberadaan Pengaduan", value: selectedSurvey["Keberadaan Pengaduan"] },
+                               { label: "Tata Cara Pengaduan", value: selectedSurvey["Tata Cara Pengaduan"] },
+                               { label: "Tata Cara Pengaduan (2)", value: selectedSurvey["Tata Cara Pengaduan (2)"] },
+                               { label: "Pengaduan Online", value: selectedSurvey["Pengaduan Online"] },
+                               { label: "Keberlanjutan", value: selectedSurvey.Keberlanjutan },
+                            ].map((item, i) => (
+                              <div key={i} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{item.label}</span>
+                                <div className={cn("text-[10px] font-black px-3 py-1 rounded-lg", getBadgeColor(item.value))}>
+                                  {item.value}
+                                </div>
+                              </div>
+                            ))}
+                         </div>
+                      </TabsContent>
+
+                      <TabsContent value="sarana" className="mt-0">
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                               { label: "Kelengkapan", value: selectedSurvey["Sarana Kelengkapan"] },
+                               { label: "Kelayakan", value: selectedSurvey["Sarana Kelayakan"] },
+                               { label: "Toilet", value: selectedSurvey["Sarana Toilet"] },
+                               { label: "Kebersihan", value: selectedSurvey.Kebersihan },
+                               { label: "Front Officer", value: selectedSurvey["Front Officer"] },
+                               { label: "Informasi", value: selectedSurvey["Ketersediaan Informasi"] },
+                               { label: "Manfaat Online", value: selectedSurvey["Kemanfaatan Online"] },
+                            ].map((item, i) => (
+                              <div key={i} className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{item.label}</p>
+                                <div className={cn("text-[10px] font-black px-2 py-0.5 rounded-full inline-block", getBadgeColor(item.value))}>
+                                  {item.value}
+                                </div>
+                              </div>
+                            ))}
+                         </div>
+                      </TabsContent>
+                   </div>
+                </Tabs>
+              </div>
+              
+              {/* Footer */}
+              <div className="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
+                <Button 
+                  onClick={() => setDialogOpen(false)}
+                  variant="ghost" 
+                  className="rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100"
+                >
+                  Close Data
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
