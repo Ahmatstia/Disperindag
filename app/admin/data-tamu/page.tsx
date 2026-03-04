@@ -501,7 +501,7 @@ export default function TamuPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
-                Database System
+                Sistem Database
               </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
@@ -521,7 +521,7 @@ export default function TamuPage() {
               className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2"
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> 
-              Refresh
+              Segarkan
             </Button>
             <Button
               variant="outline"
@@ -533,7 +533,7 @@ export default function TamuPage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filter
+              Saring
             </Button>
             <Button
               onClick={exportToExcel}
@@ -541,7 +541,7 @@ export default function TamuPage() {
               className="bg-emerald-500 hover:bg-emerald-400 text-white border-none shadow-lg shadow-emerald-900/20 gap-2"
             >
               <Download className="h-4 w-4" />
-              Export Excel
+              Ekspor Excel
             </Button>
           </div>
         </div>
@@ -632,7 +632,7 @@ export default function TamuPage() {
                 <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Search by name, instance, or purpose..."
+                    placeholder="Cari berdasarkan nama, instansi, atau tujuan..."
                     className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-emerald-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
@@ -641,7 +641,7 @@ export default function TamuPage() {
                     <DatePicker
                       date={selectedDate}
                       setDate={setSelectedDate}
-                      placeholder="Select date"
+                      placeholder="Pilih tanggal"
                     />
                     {selectedDate && (
                       <Button
@@ -665,11 +665,11 @@ export default function TamuPage() {
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
-                 Live Table View
+                 Tampilan Tabel
               </span>
            </div>
            <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
-              {filteredData.length} RESULTS
+              {filteredData.length} HASIL
            </Badge>
         </div>
         <VirtualTable
@@ -689,7 +689,7 @@ export default function TamuPage() {
           onSort={handleSort}
           className="border-0"
           rowClassName="hover:bg-emerald-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
-          emptyMessage="No guest data found"
+          emptyMessage="Tidak ada data tamu ditemukan"
           rowHeight={56}
         />
       </div>
@@ -717,18 +717,18 @@ export default function TamuPage() {
                   <div className="text-center md:text-left">
                     <DialogTitle asChild>
                       <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
-                        {selectedTamu.Nama || "Unknown Guest"}
+                        {selectedTamu.Nama || "Tamu Anonim"}
                       </h2>
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                      Detail information for guest {selectedTamu.Nama || "Unknown"}
+                      Informasi detail untuk tamu {selectedTamu.Nama || "Anonim"}
                     </DialogDescription>
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
                       <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
                         {selectedTamu.Instansi || "Personal"}
                       </Badge>
                       <Badge className="bg-emerald-400/20 text-emerald-100 hover:bg-emerald-400/30 border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
-                        {selectedTamu.Jabatan || "Visitor"}
+                        {selectedTamu.Jabatan || "Pengunjung"}
                       </Badge>
                     </div>
                   </div>
@@ -742,20 +742,20 @@ export default function TamuPage() {
                    <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personal Info</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informasi Pribadi</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jenis Kelamin</p>
                           <p className="text-xs font-black text-gray-800">{selectedTamu["Jenis Kelamin"] || "-"}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age Range</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rentang Usia</p>
                           <p className="text-xs font-black text-gray-800">{selectedTamu["Rentang Usia"] || "-"}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Phone Number</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Nomor Handphone</p>
                         <p className="text-xs font-black text-gray-800 flex items-center gap-2">
                           <Phone className="w-3 h-3 text-emerald-600" />
                           {selectedTamu["No HP"] || "-"}
@@ -766,10 +766,10 @@ export default function TamuPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Alamat</span>
                       </div>
                       <p className="text-xs font-bold text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
-                        {selectedTamu.Alamat || "No address provided"}
+                        {selectedTamu.Alamat || "Alamat tidak tersedia"}
                       </p>
                    </div>
                 </div>
@@ -778,14 +778,14 @@ export default function TamuPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Purpose of Visit</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tujuan Kunjungan</span>
                       </div>
                       <Badge className="bg-purple-50 text-purple-700 border-purple-100 font-bold mb-2">
-                        {selectedTamu["Bidang Dituju"] || "General"}
+                        {selectedTamu["Bidang Dituju"] || "Umum"}
                       </Badge>
                       <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[100px]">
                         <p className="text-xs font-bold text-gray-700 leading-relaxed">
-                          {selectedTamu.Tujuan || "No specific purpose stated"}
+                          {selectedTamu.Tujuan || "Tidak ada tujuan spesifik"}
                         </p>
                       </div>
                    </div>
@@ -793,7 +793,7 @@ export default function TamuPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Visit Timeline</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu Kunjungan</span>
                       </div>
                       <div className="flex items-center gap-3 bg-orange-50/50 p-3 rounded-xl border border-orange-100">
                         <Clock className="w-4 h-4 text-orange-500" />

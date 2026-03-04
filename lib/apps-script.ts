@@ -143,7 +143,7 @@ export async function getSurveyDataOptimized(
     // Format data - field sudah sesuai dengan spreadsheet
     const formatted = surveyArray.map((item: any) => {
       return {
-        Timestamp: item["Timestamp"] || "",
+        Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         Pekerjaan: item["Pekerjaan"] || "",
         "Jenis Kelamin": item["Jenis Kelamin"] || "",
@@ -230,19 +230,18 @@ export async function getAduanDataOptimized(
 
     // Format data sesuai struktur response asli
     const formatted = aduanArray.map((item: any) => {
+      // Menyesuaikan dengan kolom spreadsheet: Timestemp, Nama, Pekerjaan, Jenis Kelamin, Rentang Usia, Instansi/Perusahaan, Hal/Peristiwa, Lokasi Peristiwa, Tanggal Kejadian, Tindak Lanjut yang Diharapkan
       return {
-        Timestamp: item["Timestamp"] || "",
+        Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         Pekerjaan: item["Pekerjaan"] || "",
-        Instansi: item["Instansi/Perusahaan"] || "",
+        Instansi: item["Instansi/Perusahaan"] || item["Instansi"] || "",
         "Jenis Kelamin": item["Jenis Kelamin"] || "",
         "Rentang Usia": item["Rentang Usia"] || "",
-        // Perhatikan: pakai "Hal/Peristiwa" dengan slash, bukan spasi
-        "Hal Peristiwa": item["Hal/Peristiwa"] || "",
+        "Hal Peristiwa": item["Hal/Peristiwa"] || item["Hal Peristiwa"] || "",
         "Lokasi Peristiwa": item["Lokasi Peristiwa"] || "",
         "Tanggal Kejadian": item["Tanggal Kejadian"] || "",
-        // Perhatikan: nama field panjang
-        "Tindak Lanjut": item["Tindak Lanjut yang Diharapkan"] || "",
+        "Tindak Lanjut": item["Tindak Lanjut yang Diharapkan"] || item["Tindak Lanjut"] || "",
         Status: item["Status"] || "Baru",
       };
     });
@@ -312,7 +311,7 @@ export async function getTamuDataOptimized(
       console.log(`🔍 [TamuPage Debug] Item ${index}:`, item);
 
       return {
-        Timestamp: item["Timestamp"] || "",
+        Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         "Jenis Kelamin": item["Jenis Kelamin"] || "",
         "Rentang Usia": item["Rentang Usia"] || "",

@@ -447,11 +447,11 @@ export default function SurveyPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-indigo-400/20 text-indigo-100 hover:bg-indigo-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
-                Analytics System
+                Sistem Analitik
               </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
-              DATA HASIL <span className="text-indigo-200">SURVEY</span>
+              DATA HASIL <span className="text-indigo-200">SURVEI</span>
             </h1>
             <p className="text-indigo-100/60 text-xs font-medium mt-1 flex items-center gap-2">
               <BarChart3 className="w-3 h-3" />
@@ -467,7 +467,7 @@ export default function SurveyPage() {
               className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white backdrop-blur-md transition-all gap-2"
             >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> 
-              Refresh
+              Segarkan
             </Button>
             <Button
               variant="outline"
@@ -479,7 +479,7 @@ export default function SurveyPage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filter
+              Saring
             </Button>
             <Button
               onClick={exportToExcel}
@@ -487,7 +487,7 @@ export default function SurveyPage() {
               className="bg-indigo-500 hover:bg-indigo-400 text-white border-none shadow-lg shadow-indigo-900/20 gap-2"
             >
               <Download className="h-4 w-4" />
-              Export Excel
+              Ekspor Excel
             </Button>
           </div>
         </div>
@@ -540,7 +540,7 @@ export default function SurveyPage() {
                 <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Search name, job, or service type..."
+                    placeholder="Cari nama, pekerjaan, atau jenis layanan..."
                     className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-indigo-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
@@ -549,7 +549,7 @@ export default function SurveyPage() {
                     <DatePicker
                       date={selectedDate}
                       setDate={setSelectedDate}
-                      placeholder="Select date"
+                      placeholder="Pilih tanggal"
                     />
                     {selectedDate && (
                       <Button
@@ -573,11 +573,11 @@ export default function SurveyPage() {
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-indigo-500" />
               <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
-                 Survey Results Database
+                 Database Hasil Survei
               </span>
            </div>
            <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
-              {filteredData.length} RESPONSES
+              {filteredData.length} RESPONDEN
            </Badge>
         </div>
         <VirtualTable
@@ -597,7 +597,7 @@ export default function SurveyPage() {
           onSort={handleSort}
           className="border-0"
           rowClassName="hover:bg-indigo-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
-          emptyMessage="No survey records found"
+          emptyMessage="Tidak ada catatan survei ditemukan"
           rowHeight={56}
         />
       </div>
@@ -625,15 +625,15 @@ export default function SurveyPage() {
                   <div className="text-center md:text-left">
                     <DialogTitle asChild>
                       <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
-                        {selectedSurvey.Nama || "Anonymous Respondent"}
+                        {selectedSurvey.Nama || "Responden Anonim"}
                       </h2>
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                      Survey response details for {selectedSurvey.Nama || "Anonymous"}
+                      Detail respon survei untuk {selectedSurvey.Nama || "Anonim"}
                     </DialogDescription>
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
                       <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
-                        {selectedSurvey.Pekerjaan || "General"}
+                        {selectedSurvey.Pekerjaan || "Umum"}
                       </Badge>
                       <Badge className={cn(
                         "border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5 shadow-sm",
@@ -651,13 +651,19 @@ export default function SurveyPage() {
                 <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
                    <div className="px-8 pt-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                       <TabsList className="bg-transparent gap-6 h-12">
-                        {["overview", "layanan", "petugas", "pengaduan", "sarana"].map((tab) => (
+                        {[
+                          { id: "overview", label: "Ringkasan" },
+                          { id: "layanan", label: "Layanan" },
+                          { id: "petugas", label: "Petugas" },
+                          { id: "pengaduan", label: "Pengaduan" },
+                          { id: "sarana", label: "Sarana" },
+                        ].map((tab) => (
                           <TabsTrigger 
-                            key={tab}
-                            value={tab} 
+                            key={tab.id}
+                            value={tab.id} 
                             className="bg-transparent border-none shadow-none text-[10px] font-black uppercase tracking-widest text-gray-400 data-[state=active]:text-indigo-600 data-[state=active]:bg-transparent relative h-full rounded-none px-0"
                           >
-                            {tab}
+                            {tab.label}
                             <div className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 scale-x-0 data-[state=active]:scale-x-100 transition-transform" />
                           </TabsTrigger>
                         ))}
@@ -675,15 +681,15 @@ export default function SurveyPage() {
                                <div className="space-y-4">
                                   <div className="flex items-center gap-2 mb-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profile Details</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Detail Profil</span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jenis Kelamin</p>
                                       <p className="text-xs font-black text-gray-800">{selectedSurvey["Jenis Kelamin"] || "-"}</p>
                                     </div>
                                     <div>
-                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Age Range</p>
+                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rentang Usia</p>
                                       <p className="text-xs font-black text-gray-800">{selectedSurvey["Rentang Usia"] || "-"}</p>
                                     </div>
                                   </div>
@@ -691,7 +697,7 @@ export default function SurveyPage() {
                                <div className="space-y-4">
                                   <div className="flex items-center gap-2 mb-2">
                                     <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Service</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Layanan Tujuan</span>
                                   </div>
                                   <p className="text-sm font-black text-indigo-700 bg-indigo-50 p-4 rounded-2xl border border-indigo-100">
                                     {selectedSurvey.Layanan}
@@ -702,7 +708,7 @@ export default function SurveyPage() {
                             <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100 space-y-4">
                                <div className="flex items-center gap-2">
                                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                  <span className="text-xs font-black text-gray-800 uppercase tracking-widest">Global Satisfaction</span>
+                                  <span className="text-xs font-black text-gray-800 uppercase tracking-widest">Kepuasan Global</span>
                                </div>
                                <div className="pt-4 text-center">
                                   <div className={cn(
@@ -712,8 +718,8 @@ export default function SurveyPage() {
                                      {selectedSurvey.Kepuasan}
                                   </div>
                                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-4 leading-relaxed">
-                                     Respondent reflects a general feeling of <br/> 
-                                     <span className="text-indigo-600">&quot;{selectedSurvey.Kepuasan}&quot;</span> regarding Disperindag services.
+                                     Responden mencerminkan perasaan umum <br/> 
+                                     <span className="text-indigo-600">&quot;{selectedSurvey.Kepuasan}&quot;</span> mengenai layanan Disperindag.
                                   </p>
                                </div>
                             </div>

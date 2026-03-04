@@ -20,7 +20,6 @@ import {
   X,
   Users,
   Building2,
-  Phone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -416,7 +415,7 @@ export default function AduanPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-rose-400/20 text-rose-100 hover:bg-rose-400/30 border-none shadow-none font-bold text-[10px] tracking-widest uppercase">
-                Monitoring System
+                Sistem Monitoring
               </Badge>
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">
@@ -448,7 +447,7 @@ export default function AduanPage() {
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4" />
-              Filter
+              Saring
             </Button>
             <Button
               onClick={exportToExcel}
@@ -456,7 +455,7 @@ export default function AduanPage() {
               className="bg-rose-500 hover:bg-rose-400 text-white border-none shadow-lg shadow-rose-900/20 gap-2"
             >
               <Download className="h-4 w-4" />
-              Export Excel
+              Ekspor Excel
             </Button>
           </div>
         </div>
@@ -508,7 +507,7 @@ export default function AduanPage() {
                 <div className="relative flex-1 w-full">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Search name, instance, or report details..."
+                    placeholder="Cari nama, instansi, atau detail laporan..."
                     className="pl-10 border-gray-100 bg-gray-50/50 h-11 text-sm rounded-xl focus-visible:ring-rose-500"
                     onChange={(e) => debouncedSearch(e.target.value)}
                   />
@@ -517,7 +516,7 @@ export default function AduanPage() {
                     <DatePicker
                       date={selectedDate}
                       setDate={setSelectedDate}
-                      placeholder="Select date"
+                      placeholder="Pilih tanggal"
                     />
                     {selectedDate && (
                       <Button
@@ -534,7 +533,7 @@ export default function AduanPage() {
                       className="bg-emerald-600 hover:bg-emerald-500 text-white gap-2 h-11 rounded-xl shadow-lg shadow-emerald-900/10 border-none px-6"
                     >
                       <Download className="h-4 w-4" />
-                      Export Excel
+                      Ekspor Excel
                     </Button>
                 </div>
             </div>
@@ -548,7 +547,7 @@ export default function AduanPage() {
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-rose-500" />
               <span className="text-xs font-black text-gray-800 uppercase tracking-widest">
-                 Complaints Register
+                 Registrasi Aduan
               </span>
            </div>
            <Badge variant="outline" className="text-[10px] font-bold text-gray-400 border-gray-200">
@@ -572,7 +571,7 @@ export default function AduanPage() {
           onSort={handleSort}
           className="border-0"
           rowClassName="hover:bg-rose-50/30 transition-colors cursor-pointer border-b border-gray-50/50"
-          emptyMessage="No complaint records found"
+          emptyMessage="Tidak ada catatan aduan ditemukan"
           rowHeight={56}
         />
       </div>
@@ -600,11 +599,11 @@ export default function AduanPage() {
                   <div className="text-center md:text-left">
                     <DialogTitle asChild>
                       <h2 className="text-2xl font-black tracking-tight uppercase italic mb-1">
-                        {selectedAduan.Nama || "Anonymous Reporter"}
+                        {selectedAduan.Nama || "Pelapor Anonim"}
                       </h2>
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                      Detail complaint from {selectedAduan.Nama || "Unknown"}
+                      Detail aduan dari {selectedAduan.Nama || "Anonim"}
                     </DialogDescription>
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-1">
                       <Badge className="bg-white/20 hover:bg-white/30 text-white border-none font-bold text-[10px] tracking-widest uppercase px-2 py-0.5">
@@ -630,23 +629,23 @@ export default function AduanPage() {
                    <div className="space-y-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reporter Info</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Pelapor</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Profession</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pekerjaan</p>
                           <p className="text-xs font-black text-gray-800">{selectedAduan.Pekerjaan || "-"}</p>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Gender</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jenis Kelamin</p>
                           <p className="text-xs font-black text-gray-800">{selectedAduan["Jenis Kelamin"] || "-"}</p>
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Phone Number</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rentang Usia</p>
                         <p className="text-xs font-black text-gray-800 flex items-center gap-2">
-                          <Phone className="w-3 h-3 text-rose-600" />
-                          {selectedAduan["No HP"] || "-"}
+                          <Users className="w-3 h-3 text-rose-600" />
+                          {selectedAduan["Rentang Usia"] || "-"}
                         </p>
                       </div>
                    </div>
@@ -654,10 +653,10 @@ export default function AduanPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Lokasi Peristiwa</span>
                       </div>
                       <p className="text-xs font-bold text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100 italic">
-                        {selectedAduan.Alamat || "No address provided"}
+                        {selectedAduan["Lokasi Peristiwa"] || "Tidak ada lokasi spesifik"}
                       </p>
                    </div>
                 </div>
@@ -666,11 +665,23 @@ export default function AduanPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Complaint Details</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Detail Aduan</span>
                       </div>
                       <div className="bg-rose-50/30 p-4 rounded-xl border border-rose-100 min-h-[120px]">
                         <p className="text-xs font-bold text-gray-700 leading-relaxed">
-                          {selectedAduan["Hal Peristiwa"] || "No specific details provided"}
+                          {selectedAduan["Hal Peristiwa"] || "Tidak ada detail spesifik"}
+                        </p>
+                      </div>
+                   </div>
+
+                   <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tindak Lanjut yang Diharapkan</span>
+                      </div>
+                      <div className="bg-emerald-50/30 p-4 rounded-xl border border-emerald-100 min-h-[80px]">
+                        <p className="text-xs font-bold text-emerald-800 leading-relaxed">
+                          {selectedAduan["Tindak Lanjut"] || "Tidak ada deskripsi tindak lanjut"}
                         </p>
                       </div>
                    </div>
@@ -678,7 +689,7 @@ export default function AduanPage() {
                    <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Timeline</span>
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu Laporan</span>
                       </div>
                       <div className="flex items-center gap-3 bg-orange-50/50 p-3 rounded-xl border border-orange-100">
                         <Clock className="w-4 h-4 text-orange-500" />
@@ -697,13 +708,13 @@ export default function AduanPage() {
                   variant="ghost" 
                   className="rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100"
                 >
-                  Close Record
+                  Tutup
                 </Button>
                 {selectedAduan.Status !== "Selesai" && (
                    <Button 
                      className="rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-500 text-white border-none"
                    >
-                     Mark as Resolved
+                     Tandai Selesai
                    </Button>
                 )}
               </div>
