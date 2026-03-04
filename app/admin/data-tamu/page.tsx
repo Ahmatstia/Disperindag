@@ -702,7 +702,7 @@ export default function TamuPage() {
           if (!open) setSelectedTamu(null);
         }}
       >
-        <DialogContent className="max-w-3xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl">
+        <DialogContent className="max-w-3xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
           {selectedTamu && (
             <div className="flex flex-col">
               {/* Profile Header */}
@@ -736,7 +736,7 @@ export default function TamuPage() {
               </div>
 
               {/* Content Sections */}
-              <div className="p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 overflow-y-auto custom-scrollbar">
                 {/* Information Groups */}
                 <div className="space-y-6">
                    <div className="space-y-4">

@@ -610,7 +610,7 @@ export default function SurveyPage() {
           if (!open) setSelectedSurvey(null);
         }}
       >
-        <DialogContent className="max-w-4xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl">
+        <DialogContent className="max-w-4xl border-none p-0 overflow-hidden rounded-3xl shadow-2xl max-h-[90vh] flex flex-col">
           {selectedSurvey && (
             <div className="flex flex-col">
               {/* Profile Header */}
@@ -647,7 +647,7 @@ export default function SurveyPage() {
               </div>
 
               {/* Tabs Content */}
-              <div className="p-0 bg-white min-h-[400px]">
+              <div className="p-0 bg-white flex-1 overflow-y-auto custom-scrollbar">
                 <Tabs defaultValue="overview" className="w-full h-full flex flex-col">
                    <div className="px-8 pt-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                       <TabsList className="bg-transparent gap-6 h-12">
@@ -727,20 +727,26 @@ export default function SurveyPage() {
                       </TabsContent>
 
                       <TabsContent value="layanan" className="mt-0">
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                         <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
                             {[
-                               { label: "Persyaratan", value: selectedSurvey.Persyaratan },
-                               { label: "Prosedur", value: selectedSurvey.Prosedur },
-                               { label: "Proses Berkas", value: selectedSurvey["Waktu Proses Berkas"] },
-                               { label: "Selesai Aduan", value: selectedSurvey["Waktu Selesai Aduan"] },
-                               { label: "Aduan Online", value: selectedSurvey["Waktu Aduan Online"] },
-                               { label: "Respon Online", value: selectedSurvey["Waktu Respon Online"] },
-                               { label: "Biaya", value: selectedSurvey.Biaya },
-                               { label: "Kesesuaian", value: selectedSurvey.Kesesuaian },
+                               { label: "Persyaratan Pelayanan", value: selectedSurvey.Persyaratan },
+                               { label: "Sistem, Mekanisme, dan Prosedur", value: selectedSurvey.Prosedur },
+                               { label: "Waktu Proses Berkas", value: selectedSurvey["Waktu Proses Berkas"] },
+                               { label: "Waktu Selesai Pengaduan", value: selectedSurvey["Waktu Selesai Aduan"] },
+                               { label: "Kecepatan Aduan Online", value: selectedSurvey["Waktu Aduan Online"] },
+                               { label: "Respon Petugas Online", value: selectedSurvey["Waktu Respon Online"] },
+                               { label: "Biaya / Tarif", value: selectedSurvey.Biaya },
+                               { label: "Kesesuaian Produk Layanan", value: selectedSurvey.Kesesuaian },
                             ].map((item, i) => (
-                              <div key={i} className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{item.label}</p>
-                                <div className={cn("text-[10px] font-black px-2 py-0.5 rounded-full inline-block", getBadgeColor(item.value))}>
+                              <div key={i} className={cn(
+                                "flex items-center justify-between p-4 transition-colors",
+                                i !== 7 && "border-b border-gray-100"
+                              )}>
+                                <span className="text-xs font-bold text-gray-600 pr-4">{item.label}</span>
+                                <div className={cn(
+                                  "text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap shadow-sm",
+                                  getBadgeColor(item.value)
+                                )}>
                                   {item.value}
                                 </div>
                               </div>
@@ -749,17 +755,23 @@ export default function SurveyPage() {
                       </TabsContent>
 
                       <TabsContent value="petugas" className="mt-0">
-                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                         <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
                             {[
-                               { label: "Penguasaan", value: selectedSurvey.Penguasaan },
-                               { label: "Komunikasi", value: selectedSurvey.Komunikasi },
-                               { label: "Komunikasi Online", value: selectedSurvey["Komunikasi Online"] },
-                               { label: "Sikap", value: selectedSurvey.Sikap },
-                               { label: "Kerapian", value: selectedSurvey.Kerapian },
+                               { label: "Penguasaan Pengetahuan Petugas", value: selectedSurvey.Penguasaan },
+                               { label: "Kemampuan Komunikasi Petugas", value: selectedSurvey.Komunikasi },
+                               { label: "Respon Komunikasi Online", value: selectedSurvey["Komunikasi Online"] },
+                               { label: "Sikap dan Perilaku Petugas", value: selectedSurvey.Sikap },
+                               { label: "Kerapian Atribut dan Pakaian", value: selectedSurvey.Kerapian },
                             ].map((item, i) => (
-                              <div key={i} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">{item.label}</p>
-                                <div className={cn("text-xs font-black px-4 py-1.5 rounded-xl shadow-sm", getBadgeColor(item.value))}>
+                              <div key={i} className={cn(
+                                "flex items-center justify-between p-4 transition-colors",
+                                i !== 4 && "border-b border-gray-100"
+                              )}>
+                                <span className="text-xs font-bold text-gray-600">{item.label}</span>
+                                <div className={cn(
+                                  "text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap shadow-sm",
+                                  getBadgeColor(item.value)
+                                )}>
                                   {item.value}
                                 </div>
                               </div>
@@ -768,17 +780,23 @@ export default function SurveyPage() {
                       </TabsContent>
 
                       <TabsContent value="pengaduan" className="mt-0">
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
                             {[
-                               { label: "Keberadaan Pengaduan", value: selectedSurvey["Keberadaan Pengaduan"] },
-                               { label: "Tata Cara Pengaduan", value: selectedSurvey["Tata Cara Pengaduan"] },
-                               { label: "Tata Cara Pengaduan (2)", value: selectedSurvey["Tata Cara Pengaduan (2)"] },
-                               { label: "Pengaduan Online", value: selectedSurvey["Pengaduan Online"] },
-                               { label: "Keberlanjutan", value: selectedSurvey.Keberlanjutan },
+                               { label: "Keberadaan Media Pengaduan", value: selectedSurvey["Keberadaan Pengaduan"] },
+                               { label: "Kejelasan Tata Cara Pengaduan", value: selectedSurvey["Tata Cara Pengaduan"] },
+                               { label: "Kemudahan Tata Cara Pengaduan", value: selectedSurvey["Tata Cara Pengaduan (2)"] },
+                               { label: "Keaktifan Pengaduan Online", value: selectedSurvey["Pengaduan Online"] },
+                               { label: "Keberlanjutan Tindak Lanjut", value: selectedSurvey.Keberlanjutan },
                             ].map((item, i) => (
-                              <div key={i} className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider">{item.label}</span>
-                                <div className={cn("text-[10px] font-black px-3 py-1 rounded-lg", getBadgeColor(item.value))}>
+                              <div key={i} className={cn(
+                                "flex items-center justify-between p-4 transition-colors",
+                                i !== 4 && "border-b border-gray-100"
+                              )}>
+                                <span className="text-xs font-bold text-gray-600">{item.label}</span>
+                                <div className={cn(
+                                  "text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap shadow-sm",
+                                  getBadgeColor(item.value)
+                                )}>
                                   {item.value}
                                 </div>
                               </div>
@@ -787,19 +805,25 @@ export default function SurveyPage() {
                       </TabsContent>
 
                       <TabsContent value="sarana" className="mt-0">
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                         <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
                             {[
-                               { label: "Kelengkapan", value: selectedSurvey["Sarana Kelengkapan"] },
-                               { label: "Kelayakan", value: selectedSurvey["Sarana Kelayakan"] },
-                               { label: "Toilet", value: selectedSurvey["Sarana Toilet"] },
-                               { label: "Kebersihan", value: selectedSurvey.Kebersihan },
-                               { label: "Front Officer", value: selectedSurvey["Front Officer"] },
-                               { label: "Informasi", value: selectedSurvey["Ketersediaan Informasi"] },
-                               { label: "Manfaat Online", value: selectedSurvey["Kemanfaatan Online"] },
+                               { label: "Sarana Kelengkapan Fasilitas", value: selectedSurvey["Sarana Kelengkapan"] },
+                               { label: "Sarana Kelayakan Fasilitas", value: selectedSurvey["Sarana Kelayakan"] },
+                               { label: "Kebersihan Sarana Toilet", value: selectedSurvey["Sarana Toilet"] },
+                               { label: "Kebersihan Lingkungan Kantor", value: selectedSurvey.Kebersihan },
+                               { label: "Sikap Front Officer", value: selectedSurvey["Front Officer"] },
+                               { label: "Ketersediaan Media Informasi", value: selectedSurvey["Ketersediaan Informasi"] },
+                               { label: "Kemanfaatan Media Online", value: selectedSurvey["Kemanfaatan Online"] },
                             ].map((item, i) => (
-                              <div key={i} className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{item.label}</p>
-                                <div className={cn("text-[10px] font-black px-2 py-0.5 rounded-full inline-block", getBadgeColor(item.value))}>
+                              <div key={i} className={cn(
+                                "flex items-center justify-between p-4 transition-colors",
+                                i !== 6 && "border-b border-gray-100"
+                              )}>
+                                <span className="text-xs font-bold text-gray-600">{item.label}</span>
+                                <div className={cn(
+                                  "text-[10px] font-black px-3 py-1 rounded-full whitespace-nowrap shadow-sm",
+                                  getBadgeColor(item.value)
+                                )}>
                                   {item.value}
                                 </div>
                               </div>
@@ -817,7 +841,7 @@ export default function SurveyPage() {
                   variant="ghost" 
                   className="rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-100"
                 >
-                  Close Data
+                  Tutup Detail
                 </Button>
               </div>
             </div>
