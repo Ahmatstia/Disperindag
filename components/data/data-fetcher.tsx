@@ -10,14 +10,17 @@ function fetchJSONP<T>(url: string): Promise<T> {
     const script = document.createElement("script");
     script.src = `${url}?callback=${callbackName}`;
 
-    window[callbackName] = (data: T) => {
-      delete window[callbackName];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any)[callbackName] = (data: T) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any)[callbackName];
       document.body.removeChild(script);
       resolve(data);
     };
 
     script.onerror = () => {
-      delete window[callbackName];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any)[callbackName];
       document.body.removeChild(script);
       reject(new Error("JSONP request failed"));
     };
