@@ -371,8 +371,6 @@ BottomNav.displayName = "BottomNav";
 
 /* ═══════════════════════════════════════════════════════════
    SECTION: HERO
-   — Mobile: new dark luxe design
-   — Desktop: original design (floating orbs, grid, waves)
 ═══════════════════════════════════════════════════════════ */
 function HeroSection() {
   const heroRef = useRef<HTMLElement>(null);
@@ -556,8 +554,6 @@ function HeroSection() {
 
 /* ═══════════════════════════════════════════════════════════
    SECTION: LAYANAN
-   — Mobile: new card style
-   — Desktop: original 3-col grid
 ═══════════════════════════════════════════════════════════ */
 function LayananSection() {
   return (

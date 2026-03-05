@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -29,8 +28,6 @@ const menuItems = [
         href: "/admin/data-aduan",
         icon: MessageSquare,
         label: "Data Aduan",
-        badge: "New",
-        badgeVariant: "destructive" as const,
       },
       {
         href: "/admin/data-tamu",
@@ -79,18 +76,6 @@ export function SidebarNav() {
                     )}
                   />
                   <span className="flex-1 tracking-tight">{item.label}</span>
-                  
-                  {item.badge && (
-                    <Badge
-                      variant={item.badgeVariant || "secondary"}
-                      className={cn(
-                        "text-[9px] px-1.5 py-0 h-4 font-black uppercase tracking-wider scale-90",
-                        !isActive && "opacity-60"
-                      )}
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
                 </Link>
               );
             })}

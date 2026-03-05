@@ -113,7 +113,6 @@ export default function TamuPage() {
 
   // Update filteredData when tamuData changes
   useEffect(() => {
-    console.log("🔄 [TamuPage Debug] tamuData:", tamuData?.length);
     if (tamuData && tamuData.length > 0) {
       let filtered = [...tamuData];
 

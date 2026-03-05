@@ -47,7 +47,6 @@ export async function GET(request: Request) {
     }
 
     const text = await response.text();
-    console.log(`📡 Response length: ${text.length}`);
 
     // Coba parse sebagai JSON langsung
     try {
