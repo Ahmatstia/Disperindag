@@ -1,11 +1,24 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { jwtVerify } from "jose";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const token = request.cookies.get("admin-token")?.value;
-  const isLoggedIn = token === "logged-in";
+  
+  let isLoggedIn = false;
+  if (token) {
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || "default-secret");
+      await jwtVerify(token, secret);
+      console.log("✅ Token verified in middleware");
+      isLoggedIn = true;
+    } catch (err) {
+      console.error("❌ Token verification failed in middleware:", err);
+      isLoggedIn = false;
+    }
+  }
 
   // Halaman publik - selalu izinkan
   if (path === "/" || path === "/login") {

@@ -90,9 +90,6 @@ export default function LoginPage() {
             </Button>
           </CardFooter>
         </form>
-        <p className="text-xs text-center text-gray-400 mt-2 mb-4">
-          Gunakan password: <span className="font-mono">admin123</span>
-        </p>
       </Card>
     </div>
   );

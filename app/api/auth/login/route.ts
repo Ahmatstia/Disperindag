@@ -1,17 +1,31 @@
 // app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { SignJWT } from "jose";
 
 export async function POST(request: Request) {
   try {
     const { password } = await request.json();
     const cookieStore = await cookies();
 
-    if (password === "admin123") {
-      // Set cookie dengan konfigurasi yang tepat
+    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const jwtSecret = process.env.JWT_SECRET || "default-secret";
+
+    console.log(`🔑 Login attempt. Password correct: ${password === adminPassword}`);
+
+    if (password === adminPassword) {
+      // Create JWT token using jose (Edge compatible)
+      const secret = new TextEncoder().encode(jwtSecret);
+      const token = await new SignJWT({ role: "admin", authenticated: true })
+        .setProtectedHeader({ alg: "HS256" })
+        .setIssuedAt()
+        .setExpirationTime("24h")
+        .sign(secret);
+
+      // Set cookie dengan JWT
       cookieStore.set({
         name: "admin-token",
-        value: "logged-in",
+        value: token,
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24,

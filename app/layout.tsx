@@ -43,8 +43,39 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portal Layanan | DISPERINDAG Sumatera Barat",
-  description: "Portal Layanan Publik Resmi Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat",
+  title: {
+    default: "Portal Layanan | DISPERINDAG Sumatera Barat",
+    template: "%s | DISPERINDAG Sumatera Barat",
+  },
+  description: "Portal Layanan Publik Resmi Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat. Akses buku tamu digital, survey kepuasan, dan layanan aduan online.",
+  keywords: ["Disperindag", "Sumatera Barat", "Layanan Publik", "Padang", "Perindustrian", "Perdagangan", "Aduan Masyarakat"],
+  authors: [{ name: "DISPERINDAG Sumatera Barat" }],
+  creator: "DISPERINDAG Sumatera Barat",
+  publisher: "DISPERINDAG Sumatera Barat",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: "Portal Layanan | DISPERINDAG Sumatera Barat",
+    description: "Portal Layanan Publik Resmi Dinas Perindustrian dan Perdagangan Provinsi Sumatera Barat",
+    url: "https://disperindag.sumbarprov.go.id", // Sesuaikan jika ada domain asli
+    siteName: "DISPERINDAG SUMBAR",
+    locale: "id_ID",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({

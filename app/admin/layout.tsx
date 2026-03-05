@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 import LogoutButton from "@/components/auth/logout-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,10 +17,21 @@ export default async function AdminLayout({
 }) {
   // Cek token di server
   const cookieStore = await cookies();
-  const token = cookieStore.get("admin-token")?.value;
+  const token = (await cookieStore).get("admin-token")?.value;
 
-  // Jika tidak ada token, redirect ke login
-  if (!token || token !== "logged-in") {
+  // Verifikasi JWT using jose
+  let isValid = false;
+  if (token) {
+    try {
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || "default-secret");
+      await jwtVerify(token, secret);
+      isValid = true;
+    } catch {
+      isValid = false;
+    }
+  }
+
+  if (!isValid) {
     redirect("/login");
   }
 
