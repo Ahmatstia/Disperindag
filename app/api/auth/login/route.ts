@@ -11,8 +11,6 @@ export async function POST(request: Request) {
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     const jwtSecret = process.env.JWT_SECRET || "default-secret";
 
-    console.log(`🔑 Login attempt. Password correct: ${password === adminPassword}`);
-
     if (password === adminPassword) {
       // Create JWT token using jose (Edge compatible)
       const secret = new TextEncoder().encode(jwtSecret);

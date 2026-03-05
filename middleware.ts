@@ -12,10 +12,8 @@ export async function middleware(request: NextRequest) {
     try {
       const secret = new TextEncoder().encode(process.env.JWT_SECRET || "default-secret");
       await jwtVerify(token, secret);
-      console.log("✅ Token verified in middleware");
       isLoggedIn = true;
-    } catch (err) {
-      console.error("❌ Token verification failed in middleware:", err);
+    } catch {
       isLoggedIn = false;
     }
   }

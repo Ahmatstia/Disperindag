@@ -8,7 +8,6 @@ const APPS_SCRIPT_URL_TAMU = process.env.NEXT_PUBLIC_APPS_SCRIPT_TAMU;
 
 export async function GET(request: Request) {
   try {
-    console.log("📡 [GET] Proxy dipanggil");
 
     // Ambil parameter type dari URL
     const { searchParams } = new URL(request.url);
@@ -29,17 +28,11 @@ export async function GET(request: Request) {
 
     // Validasi URL
     if (!APPS_SCRIPT_URL) {
-      console.error(`❌ URL untuk ${type} tidak ditemukan di .env`);
       return NextResponse.json(
         { error: `URL for ${type} not configured` },
         { status: 500 },
       );
     }
-
-    console.log(
-      `📡 Fetching ke ${type}:`,
-      APPS_SCRIPT_URL.substring(0, 50) + "...",
-    );
 
     const response = await fetch(APPS_SCRIPT_URL, {
       cache: "no-store",
@@ -47,7 +40,6 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      console.error(`❌ Response error: ${response.status}`);
       return NextResponse.json(
         { error: `HTTP ${response.status}` },
         { status: response.status },
@@ -61,7 +53,7 @@ export async function GET(request: Request) {
     try {
       const jsonData = JSON.parse(text);
       return NextResponse.json(jsonData);
-    } catch (e) {
+    } catch {
       // Bukan JSON, lanjut cek JSONP
     }
 
@@ -88,14 +80,13 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    console.log("📡 [POST] Proxy dipanggil");
-
     const body = await request.json();
-    console.log("📤 [POST] Request body:", body);
 
-    // Tentukan URL berdasarkan sheetName
+    // Tentukan URL berdasarkan type (aduan, tamu, survey)
     let APPS_SCRIPT_URL;
-    switch (body.sheetName) {
+    const type = body.type || body.sheetName; // Fallback ke sheetName untuk kompatibilitas
+    
+    switch (type) {
       case "aduan":
         APPS_SCRIPT_URL = APPS_SCRIPT_URL_ADUAN;
         break;
@@ -108,11 +99,11 @@ export async function POST(request: Request) {
 
     if (!APPS_SCRIPT_URL) {
       return NextResponse.json(
-        { error: `URL for ${body.sheetName} not configured` },
+        { error: `URL for ${type} not configured` },
         { status: 500 },
       );
     }
-
+ 
     // Tambahkan callback parameter
     const url = new URL(APPS_SCRIPT_URL);
     url.searchParams.set("callback", "callback");

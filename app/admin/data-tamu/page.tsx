@@ -76,7 +76,8 @@ export default function TamuPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
-    index: number;
+    originalIndex: number;
+    sheetName: string;
     nama: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -104,7 +105,6 @@ export default function TamuPage() {
     total,
     loadMore,
     refresh,
-    removeItem: removeLocalItem,
   } = useInfiniteData<TamuItem>({
     fetchFn: fetchTamuData,
     initialLimit: 50,
@@ -173,7 +173,7 @@ export default function TamuPage() {
 
     setDeleting(true);
     try {
-      const result = await deleteData("tamu", itemToDelete.index);
+      const result = await deleteData("tamu", itemToDelete.originalIndex, itemToDelete.sheetName);
 
       if (result.success) {
         toast({
@@ -182,7 +182,6 @@ export default function TamuPage() {
         });
 
         refresh();
-        removeLocalItem(itemToDelete.index);
       } else {
         throw new Error(result.error || "Gagal menghapus");
       }
@@ -447,14 +446,15 @@ export default function TamuPage() {
       key: "aksi",
       header: "",
       width: 40,
-      render: (item: TamuItem, index: number) => (
+      render: (item: TamuItem) => (
         <Button
           variant="ghost"
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
             setItemToDelete({
-              index,
+              originalIndex: item.originalIndex as unknown as number,
+              sheetName: item.sheetName as string,
               nama: item.Nama || "Unnamed",
             });
             setDeleteDialogOpen(true);

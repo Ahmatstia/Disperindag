@@ -62,9 +62,9 @@ function DashboardHeader() {
       <div className="relative z-10 hidden md:block text-right">
          <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-[.25em] mb-1">
             <TrendingUp className="w-3 h-3" />
-            System Performance
+            System Live
          </div>
-         <p className="text-white text-lg font-bold">OPTIONAL • ASSET 98.2%</p>
+         <p className="text-white text-lg font-bold">READY TO MONITOR</p>
       </div>
     </div>
   );
@@ -381,12 +381,7 @@ function AduanBerdasarkanKategori({ aduanData }: { aduanData: AduanItem[] }) {
           }))
           .sort((a, b) => b.percentage - a.percentage)
           .slice(0, 4)
-      : [
-          { name: "Pelayanan", percentage: 45, color: "#3b82f6" },
-          { name: "Fasilitas", percentage: 30, color: "#c9973a" },
-          { name: "Kebersihan", percentage: 15, color: "#10b981" },
-          { name: "Lainnya", percentage: 10, color: "#ef4444" },
-        ];
+      : [];
 
   function getCategoryColor(name: string): string {
     const colors: Record<string, string> = {
@@ -410,27 +405,33 @@ function AduanBerdasarkanKategori({ aduanData }: { aduanData: AduanItem[] }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="space-y-6">
-          {kategoriData.map((item, index) => (
-            <div key={index} className="group">
-              <div className="flex justify-between text-xs mb-2 items-end">
-                <span className="text-gray-500 font-bold uppercase tracking-tight">{item.name}</span>
-                <span className="font-extrabold text-gray-900 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
-                  {item.percentage}%
-                </span>
+        {kategoriData.length > 0 ? (
+          <div className="space-y-6">
+            {kategoriData.map((item, index) => (
+              <div key={index} className="group">
+                <div className="flex justify-between text-xs mb-2 items-end">
+                  <span className="text-gray-500 font-bold uppercase tracking-tight">{item.name}</span>
+                  <span className="font-extrabold text-gray-900 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+                    {item.percentage}%
+                  </span>
+                </div>
+                <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                     className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]"
+                     style={{ 
+                       width: `${item.percentage}%`, 
+                       backgroundColor: item.color 
+                     }}
+                  />
+                </div>
               </div>
-              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                   className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]"
-                   style={{ 
-                     width: `${item.percentage}%`, 
-                     backgroundColor: item.color 
-                   }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+             <p className="text-sm font-medium">Belum ada kategori aduan</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -456,25 +457,16 @@ function RingkasanKepuasan({ stat }: { stat: { rataKepuasan: string; totalSurvey
              <span className="text-4xl font-extrabold text-gray-900 leading-none">
                 {stat.rataKepuasan}
              </span>
-             <span className="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-tighter">Sangat Baik</span>
-          </div>
-          
-          <div className="absolute -bottom-2 right-0 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5 shadow-sm">
-             <TrendingUp className="w-3 h-3" />
-             <span>8.2%</span>
+             <span className="text-[10px] text-gray-500 font-bold uppercase mt-1 tracking-tighter">
+                {Number(stat.rataKepuasan) >= 4 ? "Sangat Baik" : Number(stat.rataKepuasan) >= 3 ? "Baik" : "Cukup"}
+             </span>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 mt-2">
-           <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Total</p>
+           <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 col-span-2">
+              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Responden</p>
               <p className="text-lg font-extrabold text-gray-800">{stat.totalSurvey}</p>
            </div>
-           <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Target</p>
-              <p className="text-lg font-extrabold text-gray-800">500</p>
-           </div>
-        </div>
       </CardContent>
     </Card>
   );

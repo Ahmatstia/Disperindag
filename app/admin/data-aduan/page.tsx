@@ -74,7 +74,8 @@ export default function AduanPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
-    index: number;
+    originalIndex: number;
+    sheetName: string;
     nama: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -92,7 +93,6 @@ export default function AduanPage() {
     total,
     loadMore,
     refresh,
-    removeItem: removeLocalItem,
   } = useInfiniteData<AduanItem>({
     fetchFn: (page, limit) => getAduanDataOptimized(page, limit),
     initialLimit: 50,
@@ -154,7 +154,7 @@ export default function AduanPage() {
 
     setDeleting(true);
     try {
-      const result = await deleteData("aduan", itemToDelete.index);
+      const result = await deleteData("aduan", itemToDelete.originalIndex, itemToDelete.sheetName);
 
       if (result.success) {
         toast({
@@ -163,7 +163,6 @@ export default function AduanPage() {
         });
 
         refresh();
-        removeLocalItem(itemToDelete.index);
       } else {
         throw new Error(result.error || "Gagal menghapus");
       }
@@ -371,14 +370,15 @@ export default function AduanPage() {
       key: "aksi",
       header: "",
       width: 40,
-      render: (item: AduanItem, index: number) => (
+      render: (item: AduanItem) => (
         <Button
           variant="ghost"
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
             setItemToDelete({
-              index,
+              originalIndex: item.originalIndex as unknown as number,
+              sheetName: item.sheetName as string,
               nama: item.Nama || "Unnamed",
             });
             setDeleteDialogOpen(true);
@@ -710,13 +710,6 @@ export default function AduanPage() {
                 >
                   Tutup
                 </Button>
-                {selectedAduan.Status !== "Selesai" && (
-                   <Button 
-                     className="rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-500 text-white border-none"
-                   >
-                     Tandai Selesai
-                   </Button>
-                )}
               </div>
             </div>
           )}

@@ -52,8 +52,6 @@ async function fetchFromServer(type = "survey") {
 // ============================================
 async function fetchFromClient(type = "survey") {
   try {
-    console.log(`🌐 [CLIENT] Fetching ${type} data...`);
-
     const response = await fetch(`/api/proxy?type=${type}`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
@@ -89,7 +87,7 @@ async function fetchFromProxy(type = "survey") {
 // ============================================
 // FUNGSI DELETE UNTUK CLIENT
 // ============================================
-export async function deleteData(sheetName: string, rowIndex: number) {
+export async function deleteData(type: string, rowIndex: number, sheetName?: string) {
   if (isServer) {
     throw new Error("Delete hanya bisa dilakukan di client");
   }
@@ -100,17 +98,13 @@ export async function deleteData(sheetName: string, rowIndex: number) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "delete",
-        sheetName,
-        rowIndex,
+        type, // e.g., 'survey', 'aduan', 'tamu'
+        sheetName, // Nama sheet asli (misal: "2026")
+        rowIndex, // Index asli di spreadsheet
       }),
     });
 
     const data = await response.json();
-
-    if (data.success) {
-      // clearCache();
-    }
-
     return data;
   } catch (error) {
     console.error("❌ Delete error:", error);
@@ -126,8 +120,6 @@ export async function getSurveyDataOptimized(
   limit = 50,
 ) {
   try {
-    console.log(`🔍 [SurveyPage Debug] Fetching page ${page}, limit ${limit}`);
-
     const data = await fetchFromProxy("survey");
 
     if (!data || !data.survey) {
@@ -141,8 +133,11 @@ export async function getSurveyDataOptimized(
     }
 
     // Format data - field sudah sesuai dengan spreadsheet
-    const formatted = surveyArray.map((item: any) => {
+    const sheetName = data.sheetName || "Sheet1";
+    const formatted = surveyArray.map((item: any, idx: number) => {
       return {
+        originalIndex: idx,
+        sheetName: sheetName,
         Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         Pekerjaan: item["Pekerjaan"] || "",
@@ -206,22 +201,15 @@ export async function getAduanDataOptimized(
   limit = 50,
 ) {
   try {
-    console.log(`🔍 [AduanPage Debug] Fetching page ${page}, limit ${limit}`);
-
     const data = await fetchFromProxy("aduan");
 
-    console.log(`🔍 [AduanPage Debug] Raw data from proxy:`, data);
-
     if (!data || !data.aduan) {
-      console.log(`🔍 [AduanPage Debug] data.aduan is null/undefined`);
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
     }
 
     const aduanArray = data.aduan;
-    console.log(`🔍 [AduanPage Debug] aduanArray length:`, aduanArray.length);
 
     if (aduanArray.length === 0) {
-      console.log(`🔍 [AduanPage Debug] aduanArray is empty`);
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
     }
 
@@ -229,9 +217,12 @@ export async function getAduanDataOptimized(
     console.log(`🔍 [AduanPage Debug] Sample item:`, aduanArray[0]);
 
     // Format data sesuai struktur response asli
-    const formatted = aduanArray.map((item: any) => {
+    const sheetName = data.sheetName || "Sheet1";
+    const formatted = aduanArray.map((item: any, idx: number) => {
       // Menyesuaikan dengan kolom spreadsheet: Timestemp, Nama, Pekerjaan, Jenis Kelamin, Rentang Usia, Instansi/Perusahaan, Hal/Peristiwa, Lokasi Peristiwa, Tanggal Kejadian, Tindak Lanjut yang Diharapkan
       return {
+        originalIndex: idx,
+        sheetName: sheetName,
         Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         Pekerjaan: item["Pekerjaan"] || "",
@@ -287,14 +278,9 @@ export async function getTamuDataOptimized(
   limit = 50,
 ) {
   try {
-    console.log(`🔍 [TamuPage Debug] Fetching page ${page}, limit ${limit}`);
-
     const data = await fetchFromProxy("tamu");
 
-    console.log(`🔍 [TamuPage Debug] Raw data from proxy:`, data);
-
     if (!data || !data.tamu) {
-      console.log(`🔍 [TamuPage Debug] data.tamu is null/undefined`);
       return { data: [], total: 0, page, totalPages: 0, hasMore: false };
     }
 
@@ -307,10 +293,11 @@ export async function getTamuDataOptimized(
     }
 
     // Format data sesuai struktur response asli
-    const formatted = tamuArray.map((item: any, index: number) => {
-      console.log(`🔍 [TamuPage Debug] Item ${index}:`, item);
-
+    const sheetName = data.sheetName || "Sheet1";
+    const formatted = tamuArray.map((item: any, idx: number) => {
       return {
+        originalIndex: idx,
+        sheetName: sheetName,
         Timestamp: item["Timestamp"] || item["Timestemp"] || "",
         Nama: item["Nama"] || "",
         "Jenis Kelamin": item["Jenis Kelamin"] || "",

@@ -95,7 +95,8 @@ export default function SurveyPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{
-    index: number;
+    originalIndex: number;
+    sheetName: string;
     nama: string;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -113,7 +114,6 @@ export default function SurveyPage() {
     total,
     loadMore,
     refresh,
-    removeItem: removeLocalItem,
   } = useInfiniteData<SurveyItem>({
     fetchFn: (page, limit) => getSurveyDataOptimized(page, limit),
     initialLimit: 50,
@@ -173,16 +173,15 @@ export default function SurveyPage() {
 
     setDeleting(true);
     try {
-      const result = await deleteData("survey", itemToDelete.index);
+      const result = await deleteData("survey", itemToDelete.originalIndex, itemToDelete.sheetName);
 
       if (result.success) {
         toast({
           title: "Berhasil",
-          description: `Data ${itemToDelete.nama} berhasil dihapus`,
+          description: `Data survey ${itemToDelete.nama} berhasil dihapus`,
         });
 
         refresh();
-        removeLocalItem(itemToDelete.index);
       } else {
         throw new Error(result.error || "Gagal menghapus");
       }
@@ -403,14 +402,15 @@ export default function SurveyPage() {
       key: "aksi",
       header: "",
       width: 40,
-      render: (item: SurveyItem, index: number) => (
+      render: (item: SurveyItem) => (
         <Button
           variant="ghost"
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
             setItemToDelete({
-              index,
+              originalIndex: item.originalIndex as unknown as number,
+              sheetName: item.sheetName as string,
               nama: item.Nama || "Unnamed",
             });
             setDeleteDialogOpen(true);
