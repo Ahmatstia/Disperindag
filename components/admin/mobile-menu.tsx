@@ -11,9 +11,6 @@ import {
   ClipboardList,
   MessageSquare,
   BookOpen,
-  BarChart3,
-  Settings,
-  HelpCircle,
 } from "lucide-react";
 
 export function MobileMenu() {
@@ -24,9 +21,6 @@ export function MobileMenu() {
     { href: "/admin/data-survey", label: "Data Survey", icon: ClipboardList },
     { href: "/admin/data-aduan", label: "Data Aduan", icon: MessageSquare },
     { href: "/admin/data-tamu", label: "Data Tamu", icon: BookOpen },
-    { href: "/admin/laporan", label: "Laporan", icon: BarChart3 },
-    { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
-    { href: "/admin/bantuan", label: "Bantuan", icon: HelpCircle },
   ];
 
   return (

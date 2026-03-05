@@ -358,18 +358,18 @@ export async function getTamuDataOptimized(
 // FUNGSI BACKWARD COMPATIBILITY
 // ============================================
 export async function getSurveyData() {
-  const data = await fetchFromProxy("survey");
-  return data?.survey || [];
+  const result = await getSurveyDataOptimized(1, 1000); // Ambil limit besar untuk dashboard
+  return result.data;
 }
 
 export async function getAduanData() {
-  const data = await fetchFromProxy("aduan");
-  return data?.aduan || [];
+  const result = await getAduanDataOptimized(1, 1000);
+  return result.data;
 }
 
 export async function getTamuData() {
-  const data = await fetchFromProxy("tamu");
-  return data?.tamu || [];
+  const result = await getTamuDataOptimized(1, 1000);
+  return result.data;
 }
 
 export async function getSurveyDataPaginated(page = 1, limit = 50) {
@@ -418,12 +418,13 @@ export function clearCache() {
 export async function getStatistik() {
   try {
     const [survey, aduan, tamu] = await Promise.all([
-      fetchFromProxy("survey"),
-      fetchFromProxy("aduan"),
-      fetchFromProxy("tamu"),
+      getSurveyData(),
+      getAduanData(),
+      getTamuData(),
     ]);
 
-    const surveyData = survey?.survey || [];
+    // Survey data sudah diformat oleh getSurveyData (via getSurveyDataOptimized)
+    const surveyData = (survey || []) as any[];
     
     // Hitung rata-rata kepuasan
     let totalScore = 0;
@@ -432,8 +433,8 @@ export async function getStatistik() {
     surveyData.forEach((item: any) => {
       const satisfaction = item["Kepuasan"] || "";
       let score = 0;
-      if (satisfaction.includes("Sangat Puas")) score = 5;
-      else if (satisfaction.includes("Puas")) score = 4;
+      if (satisfaction.includes("Sangat")) score = 5;
+      else if (satisfaction.includes("Puas") || satisfaction.includes("Baik")) score = 4;
       else if (satisfaction.includes("Cukup")) score = 3;
       else if (satisfaction.includes("Kurang")) score = 2;
       else if (satisfaction.includes("Tidak")) score = 1;
@@ -448,8 +449,8 @@ export async function getStatistik() {
 
     return {
       totalSurvey: surveyData.length,
-      totalAduan: aduan?.aduan?.length || 0,
-      totalTamu: tamu?.tamu?.length || 0,
+      totalAduan: aduan?.length || 0,
+      totalTamu: tamu?.length || 0,
       rataKepuasan,
     };
   } catch (error) {

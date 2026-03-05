@@ -824,10 +824,13 @@ function KontakSection() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.14 }}
             style={{ borderRadius: 18, overflow: "hidden", border: "1px solid rgba(8,21,41,0.09)", boxShadow: "0 8px 32px rgba(8,21,41,0.07)", aspectRatio: "4/3", minHeight: 260 }}>
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2793680888847!2d100.354123!3d-0.955789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwNTcnMjAuOCJTIDEwMMKwMjEnMTQuOSJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2849547513183!2d100.3596780718293!3d-0.9368680015928726!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2fd4b92fc440ff35%3A0x9182bbcaf130d938!2sJl.%20Aur%20No.1%2C%20Padang%20Pasir%2C%20Kec.%20Padang%20Bar.%2C%20Kota%20Padang%2C%20Sumatera%20Barat%2025112!5e0!3m2!1sid!2sid!4v1772674578704!5m2!1sid!2sid"
               width="100%" height="100%" style={{ border: 0, display: "block" }} allowFullScreen loading="lazy" title="Peta DISPERINDAG" />
+              
           </motion.div>
         </div>
+
+        
 
         {/* Mobile: stacked */}
         <div className="block md:hidden">
@@ -856,7 +859,7 @@ function KontakSection() {
             ))}
           </div>
           <motion.div {...fadeUp(0.24)} style={{ borderRadius: C.r5, overflow: "hidden", border: `1px solid ${C.rimLight}`, boxShadow: C.elev2, aspectRatio: "16/9" }}>
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2793680888847!2d100.354123!3d-0.955789!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMMKwNTcnMjAuOCJTIDEwMMKwMjEnMTQuOSJF!5e0!3m2!1sen!2sid!4v1620000000000!5m2!1sen!2sid"
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.2849547513183!2d100.3596780718293!3d-0.9368680015928726!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2fd4b92fc440ff35%3A0x9182bbcaf130d938!2sJl.%20Aur%20No.1%2C%20Padang%20Pasir%2C%20Kec.%20Padang%20Bar.%2C%20Kota%20Padang%2C%20Sumatera%20Barat%2025112!5e0!3m2!1sid!2sid!4v1772674578704!5m2!1sid!2sid"
               width="100%" height="100%" style={{ border: 0, display: "block" }} allowFullScreen loading="lazy" title="Peta DISPERINDAG" />
           </motion.div>
         </div>

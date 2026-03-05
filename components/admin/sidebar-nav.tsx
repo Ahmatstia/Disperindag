@@ -9,9 +9,6 @@ import {
   ClipboardList,
   MessageSquare,
   BookOpen,
-  BarChart3,
-  Settings,
-  HelpCircle,
 } from "lucide-react";
 
 const menuItems = [
@@ -39,31 +36,6 @@ const menuItems = [
         href: "/admin/data-tamu",
         icon: BookOpen,
         label: "Data Tamu",
-      },
-    ],
-  },
-  {
-    group: "Laporan",
-    items: [
-      {
-        href: "/admin/laporan",
-        icon: BarChart3,
-        label: "Laporan Bulanan",
-      },
-    ],
-  },
-  {
-    group: "Pengaturan",
-    items: [
-      {
-        href: "/admin/pengaturan",
-        icon: Settings,
-        label: "Pengaturan",
-      },
-      {
-        href: "/admin/bantuan",
-        icon: HelpCircle,
-        label: "Bantuan",
       },
     ],
   },
