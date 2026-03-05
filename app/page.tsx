@@ -56,11 +56,11 @@ const additionalServices = [
 ];
 
 const faqs = [
-  { q: "Bagaimana cara mengakses layanan DISPERINDAG secara online?",   a: "Anda dapat mengakses layanan melalui portal ini. Tersedia layanan buku tamu digital, survey kepuasan, dan pengaduan masyarakat yang dapat diakses kapan saja melalui tautan di halaman Layanan." },
-  { q: "Berapa lama waktu penyelesaian pengaduan masyarakat?",          a: "Setiap pengaduan yang masuk akan ditindaklanjuti maksimal 3×24 jam kerja. Anda akan mendapatkan konfirmasi penerimaan dan informasi perkembangan penanganan melalui email yang Anda daftarkan." },
-  { q: "Apa saja syarat untuk mendapatkan pendampingan UMKM?",          a: "Pendampingan UMKM terbuka untuk pelaku usaha di Provinsi Sumatera Barat. Persyaratan: memiliki NIK, usaha terdaftar atau dalam proses pendaftaran, dan mengikuti sesi orientasi yang dijadwalkan." },
-  { q: "Bagaimana cara mendapatkan informasi harga komoditas terkini?", a: "Informasi harga komoditas diperbarui berkala melalui kanal informasi resmi DISPERINDAG. Hubungi kantor kami langsung atau ikuti akun media sosial resmi kami." },
-  { q: "Jam operasional kantor DISPERINDAG Sumatera Barat?",            a: "Kantor kami melayani Senin–Jumat pukul 08.00–16.00 WIB. Layanan online portal tersedia 24 jam setiap hari." },
+  { q: "Apa saja pelayanan yang tersedia di DISPERINDAG Provinsi Sumbar?", a: "Pelayanan kami meliputi: 1. Pengurusan SKA (Surat Keterangan Asal), 2. BPSK, 3. Permintaan Data Pelaku UMKM, 4. Konsultasi mengenai standarisasi produk dan sertifikat halal, 5. Pengujian barang." },
+  { q: "Bidang dan UPTD apa saja yang ada di DISPERINDAG?", a: "DISPERINDAG terdiri dari Bidang Perdagangan, Bidang PKTN, Bidang Agro, Bidang Non Agro, UPTD Balai Pengujian dan Sertifikasi Mutu Barang, UPTD Logam, serta UPTD Pelayanan dan Pengembangan Minyak Atsiri." },
+  { q: "Bagaimana cara mengakses layanan DISPERINDAG secara online?", a: "Anda dapat mengakses layanan melalui portal ini. Tersedia layanan buku tamu digital, survey kepuasan, dan pengaduan masyarakat yang dapat diakses kapan saja melalui tautan di halaman Layanan." },
+  { q: "Berapa lama waktu penyelesaian pengaduan masyarakat?", a: "Setiap pengaduan yang masuk akan ditindaklanjuti maksimal 3×24 jam kerja. Anda akan mendapatkan konfirmasi penerimaan dan informasi perkembangan penanganan melalui email yang Anda daftarkan." },
+  { q: "Jam operasional kantor DISPERINDAG Sumatera Barat?", a: "Senin-Kamis: 07.30 - 16.00 WIB (Istirahat: 12.00 - 13.00 WIB). Jumat: 07.30 - 16.30 WIB (Istirahat: 12.00 - 13.30 WIB). Layanan online portal tersedia 24 jam setiap hari." },
 ];
 
 const NAV = [
@@ -71,7 +71,7 @@ const NAV = [
   { id: "kontak",  Icon: PhoneCall,  label: "Kontak"  },
 ];
 
-const navLinks = ["Beranda", "Layanan", "Fasilitas", "FAQ", "Kontak"];
+
 
 /* ═══════════════════════════════════════════════════════════
    UTILS
@@ -244,12 +244,12 @@ function Header({ active, scrolled }: { active: string; scrolled: boolean }) {
 
           {/* Desktop links */}
           <div className="hidden md:flex" style={{ alignItems: "center", gap: "2.5rem" }}>
-            {navLinks.map(item => (
-              <motion.button key={item}
-                onClick={() => go(item === "Beranda" ? "hero" : item.toLowerCase())}
+            {NAV.map(item => (
+              <motion.button key={item.id}
+                onClick={() => go(item.id)}
                 whileHover={{ y: -2, color: C.gold }}
                 style={{ background: "none", border: "none", cursor: "pointer", textDecoration: "none", color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", transition: "all 0.3s ease" }}
-              >{item}</motion.button>
+              >{item.label}</motion.button>
             ))}
             <motion.button onClick={() => go("layanan")}
               whileHover={{ scale: 1.05, boxShadow: "0 8px 25px rgba(201,151,58,0.4)" }}
