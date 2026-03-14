@@ -483,8 +483,7 @@ function HeroSection() {
             initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07, duration: 0.7 }}
             style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(2.6rem, 12vw, 4.2rem)", fontWeight: 800, lineHeight: 0.9, letterSpacing: "-0.025em", color: "#fff", marginBottom: 0 }}>
             <span style={{ display: "block" }}>Dinas</span>
-            <span style={{ display: "block", fontStyle: "italic", color: C.goldLight, fontWeight: 400 }}>Perindust-</span>
-            <span style={{ display: "block", fontStyle: "italic", color: C.goldLight, fontWeight: 400 }}>rian</span>
+            <span style={{ display: "block", fontStyle: "italic", color: C.goldLight, fontWeight: 150 }}>Perindustrian</span>
             <span style={{ display: "block", color: "rgba(255,255,255,0.22)", fontSize: "0.52em", fontWeight: 700, fontStyle: "normal", letterSpacing: "0.15em", marginTop: "0.6rem", fontFamily: "'DM Mono', monospace" }}>& PERDAGANGAN</span>
           </motion.h1>
 
